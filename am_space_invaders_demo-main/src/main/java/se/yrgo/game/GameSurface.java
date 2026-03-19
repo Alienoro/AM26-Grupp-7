@@ -26,20 +26,21 @@ import javax.swing.JPanel;
  * demonstrate the bare minimum of stuff than can be done drawing on a panel.
  * This is by no means good code, but rather a short demonstration on
  * some things one can do to make a very simple Swing based game.
- * 
+ *
  * If you really want to make a good game there are several toolkits for
  * game making out there which are much more suitable for this.
- * 
+ *
  */
 public class GameSurface extends JPanel implements KeyListener {
     private static final long serialVersionUID = 6260582674762246325L;
     private static Logger logger = Logger.getLogger(GameSurface.class.getName());
-    
+
     private static final double ALIEN_PIXELS_PER_MS = 0.12;
     private static final int SCORE_PER_SECOND = 100;
-    
+
     // make some transient to get past boring serialization demands...
     private transient FrameUpdater updater;
+    private boolean isPlaying;
     private boolean gameOver;
     private transient List<Alien> aliens;
     private Rectangle spaceShip;
@@ -72,6 +73,7 @@ public class GameSurface extends JPanel implements KeyListener {
             logger.log(Level.WARNING, "Unable to load image resource: /alien.png", ex);
         }
 
+        this.isPlaying = true;
         this.gameOver = false;
         this.aliens = new ArrayList<>();
         this.spaceShip = new Rectangle(20, width / 2 - 15, 46, 20);
@@ -93,7 +95,7 @@ public class GameSurface extends JPanel implements KeyListener {
     /**
      * Call this method when the graphics needs to be repainted on the graphics
      * surface.
-     * 
+     *
      * @param g the graphics to paint on
      */
     private void drawSurface(Graphics2D g) {
@@ -105,6 +107,7 @@ public class GameSurface extends JPanel implements KeyListener {
             g.setColor(Color.black);
             g.setFont(new Font("Arial", Font.BOLD, 48));
             g.drawString("Game over!", 20, d.width / 2 - 24);
+            g.drawString("Press enter to restart game", 40, d.width / 2 - 24);
             drawScore(g, d, true);
             return;
         }
@@ -117,7 +120,7 @@ public class GameSurface extends JPanel implements KeyListener {
         for (Alien alien : aliens) {
             if (alienImageSprite != null) {
                 int offset = 10 * alienImageSpriteCount;
-                g.drawImage(alienImageSprite, alien.bounds.x, alien.bounds.y, 
+                g.drawImage(alienImageSprite, alien.bounds.x, alien.bounds.y,
                         alien.bounds.x + alien.bounds.width, alien.bounds.y + alien.bounds.height,
                         offset, 0, offset + 10, 10, null);
             } else {
@@ -153,6 +156,10 @@ public class GameSurface extends JPanel implements KeyListener {
         g.drawString(scoreText, textX, textY);
     }
 
+    public boolean getGameOver() {
+        return this.gameOver;
+    }
+
     public void update(int time) {
         if (gameOver) {
             updater.interrupt();
@@ -175,7 +182,7 @@ public class GameSurface extends JPanel implements KeyListener {
 
         // update ship sprite
         shipImageSpriteCount = (time / 100) % 3;
-        
+
         // update alien sprite
         alienImageSpriteCount = (time / 150) % 3;
 
@@ -227,24 +234,44 @@ public class GameSurface extends JPanel implements KeyListener {
         aliens.add(new Alien(newTime, FAR_OFFSCREEN, y));
     }
 
+    private void resetGame() {
+        this.gameOver = false;
+        this.score = 0;
+
+        this.aliens.clear();
+        this.spaceShip.setLocation(20, getSize().height / 2 - 15);
+
+        this.updater = new FrameUpdater(this, 60);
+        this.updater.setDaemon(true);
+        this.updater.start();
+    }
+
     @Override
-    public void keyReleased(KeyEvent e) {
+    public void keyPressed(KeyEvent e) {
         // this event triggers when we release a key and then
         // we will move the space ship if the game is not over yet
 
-        if (gameOver) {
-            return;
-        }
 
         final int minHeight = 10;
         final int maxHeight = this.getSize().height - spaceShip.height - 10;
         final int kc = e.getKeyCode();
 
-        if (kc == KeyEvent.VK_UP && spaceShip.y > minHeight) {
-            spaceShip.translate(0, -10);
-        } else if (kc == KeyEvent.VK_DOWN && spaceShip.y < maxHeight) {
-            spaceShip.translate(0, 10);
+        if (gameOver) {
+            if (kc == KeyEvent.VK_ENTER) {
+                resetGame();
+            }
+            return;
         }
+
+        if (kc == KeyEvent.VK_SPACE && spaceShip.y > minHeight && spaceShip.y < maxHeight) {
+            for(int i = 0; i < 3; i++) {
+                spaceShip.translate(0, -10);
+            }
+        }
+
+
+
+
     }
 
     @Override
@@ -253,7 +280,7 @@ public class GameSurface extends JPanel implements KeyListener {
     }
 
     @Override
-    public void keyPressed(KeyEvent e) {
+    public void keyReleased(KeyEvent e) {
         // do nothing
     }
 }
