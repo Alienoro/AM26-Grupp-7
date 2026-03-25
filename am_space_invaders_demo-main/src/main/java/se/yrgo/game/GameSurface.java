@@ -49,8 +49,6 @@ public class GameSurface extends JPanel implements KeyListener {
     private Rectangle spaceShip;
     private transient BufferedImage shipImageSprite;
     private int shipImageSpriteCount;
-    // private transient BufferedImage alienImageSprite;
-    // private int alienImageSpriteCount;
     private int score;
     private static final int GAP_SIZE = 200; // storleken på hålet mellan pelarna
 
@@ -65,17 +63,6 @@ public class GameSurface extends JPanel implements KeyListener {
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to load image resource: /ship.png", ex);
         }
-
-        // try (InputStream alienStream = GameSurface.class.getResourceAsStream("/alien.png")) {
-        //     if (alienStream == null) {
-        //         logger.log(Level.WARNING, "Unable to load image resource: /alien.png");
-        //     } else {
-        //         this.alienImageSprite = ImageIO.read(alienStream);
-        //     }
-        //     this.alienImageSpriteCount = 0;
-        // } catch (IOException ex) {
-        //     logger.log(Level.WARNING, "Unable to load image resource: /alien.png", ex);
-        // }
 
         this.gameOver = false;
         this.aliens = new ArrayList<>();
@@ -121,20 +108,6 @@ public class GameSurface extends JPanel implements KeyListener {
         // fill the background
         g.setColor(Color.DARK_GRAY);
         g.fillRect(0, 0, d.width, d.height);
-
-        // draw the aliens
-        // for (Alien alien : aliens) {
-        // if (alienImageSprite != null) {
-        // int offset = 10 * alienImageSpriteCount;
-        // g.drawImage(alienImageSprite, alien.bounds.x, alien.bounds.y,
-        // alien.bounds.x + alien.bounds.width, alien.bounds.y + alien.bounds.height,
-        // offset, 0, offset + 10, 10, null);
-        // } else {
-        // g.setColor(Color.GREEN);
-        // g.fillRect(alien.bounds.x, alien.bounds.y, alien.bounds.width,
-        // alien.bounds.height);
-        // }
-        // }
 
         // varje alien är nu två pelare, en uppifrån och en nedifrån med ett mellanrum emellan
         // Det blir en pelare för varje alien...
@@ -226,27 +199,11 @@ public class GameSurface extends JPanel implements KeyListener {
 
         final List<Alien> toRemove = new ArrayList<>();
 
-        // for (Alien alien : aliens) {
-        // // movement is based on elapsed time to make it smoother and
-        // // more consistent over different computers
-        // int timeElapsed = time - alien.created;
-        // alien.bounds.x = (int) (d.width - (timeElapsed * ALIEN_PIXELS_PER_MS));
-        // if (alien.bounds.x + alien.bounds.width < 0) {
-        // // we add to another list and remove later
-        // // to avoid concurrent modification in a for-each loop
-        // toRemove.add(alien);
-        // }
-
-        // if (alien.bounds.intersects(spaceShip)) {
-        // gameOver = true;
-        // }
-        // }
-
         for (Alien alien : aliens) {
             int timeElapsed = time - alien.created;
             int newX = (int) (d.width - (timeElapsed * ALIEN_PIXELS_PER_MS));
 
-            // b // båda pelarna rör sig tillsammans 
+            // båda pelarna rör sig tillsammans 
             alien.topPillar.x = newX;
             alien.bottomPillar.x = newX;
 
