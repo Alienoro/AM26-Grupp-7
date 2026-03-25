@@ -2,14 +2,17 @@ package se.yrgo.game;
 
 import java.awt.Rectangle;
 
+
 // this class can be much improved, better encapsulation
 // draw itself, update itself etc. etc.
 public class Alien {
     public final int created;
-    public final Rectangle bounds;
+    public final Rectangle topPillar;
+    public final Rectangle bottomPillar;
 
-    public Alien(int created, int x, int y) {
+    public Alien(int created, int x, int gapY, int gapSize, int screenHeight) {
         this.created = created;
-        this.bounds = new Rectangle(x, y, 10, 10);
+        this.topPillar = new Rectangle(x, 0, 40, gapY);
+        this.bottomPillar = new Rectangle(x, gapY + gapSize, 40, screenHeight - gapY - gapSize);
     }
 }
