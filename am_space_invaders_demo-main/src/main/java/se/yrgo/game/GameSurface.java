@@ -51,6 +51,7 @@ public class GameSurface extends JPanel implements KeyListener {
     private int shipImageSpriteCount;
     private int score;
     private static final int GAP_SIZE = 200; // storleken på hålet mellan pelarna
+    private int timeSinceLastPillar = 0;
 
     public GameSurface(final int width) {
         try (InputStream spriteStream = GameSurface.class.getResourceAsStream("/ship.png")) {
@@ -109,7 +110,8 @@ public class GameSurface extends JPanel implements KeyListener {
         g.setColor(Color.DARK_GRAY);
         g.fillRect(0, 0, d.width, d.height);
 
-        // varje alien är nu två pelare, en uppifrån och en nedifrån med ett mellanrum emellan
+        // varje alien är nu två pelare, en uppifrån och en nedifrån med ett mellanrum
+        // emellan
         // Det blir en pelare för varje alien...
         for (Alien alien : aliens) {
             g.setColor(Color.GREEN);
@@ -183,9 +185,9 @@ public class GameSurface extends JPanel implements KeyListener {
         // fill up with some aliens if we have none (at start of game)
         if (aliens.isEmpty()) {
             for (int i = 0; i < 3; ++i) {
-                // addAlien(time, d.height, true);
-                 addAlien(time - (i * 2000), d.height, false);
+                addAlien(time - (i * 2000), d.height, false);
             }
+            timeSinceLastPillar = time; // sparar när senaste pelaren skedde
         }
 
         // update ship sprite
@@ -203,7 +205,7 @@ public class GameSurface extends JPanel implements KeyListener {
             int timeElapsed = time - alien.created;
             int newX = (int) (d.width - (timeElapsed * ALIEN_PIXELS_PER_MS));
 
-            // båda pelarna rör sig tillsammans 
+            // båda pelarna rör sig tillsammans
             alien.topPillar.x = newX;
             alien.bottomPillar.x = newX;
 
@@ -224,8 +226,12 @@ public class GameSurface extends JPanel implements KeyListener {
         aliens.removeAll(toRemove);
 
         // add new aliens for every one that was removed
-        for (int i = 0; i < toRemove.size(); ++i) {
-            addAlien(time + (i * 2000), d.height, false);
+
+        // skapar en ny pelare var 2000ms automatiskt
+        // time - timeSinceLastPillar räknar ut hur lång tid sedan senaste pelaren
+        if (time - timeSinceLastPillar >= 2000) {
+            timeSinceLastPillar = time; // sparar när senaste pelaren skapades
+            addAlien(time, d.height, false);
         }
     }
 
@@ -241,8 +247,9 @@ public class GameSurface extends JPanel implements KeyListener {
         }
 
         final int FAR_OFFSCREEN = 10000;
-        //detta slumpar vart mellanrummet ska vara på skärmen
-        //gör så att hålet inte kan vara för nära toppen eller botten så man har en chans att komma igenom
+        // detta slumpar vart mellanrummet ska vara på skärmen
+        // gör så att hålet inte kan vara för nära toppen eller botten så man har en
+        // chans att komma igenom
         int gapY = ThreadLocalRandom.current().nextInt(80, height - GAP_SIZE - 80);
         aliens.add(new Alien(newTime, FAR_OFFSCREEN, gapY, GAP_SIZE, height));
     }
@@ -254,6 +261,7 @@ public class GameSurface extends JPanel implements KeyListener {
         velocityY = 0;
         lastTime = 0;
         score = 0;
+        timeSinceLastPillar = 0;
         gameOver = false;
         updater = new FrameUpdater(this, 60);
         updater.setDaemon(true);
