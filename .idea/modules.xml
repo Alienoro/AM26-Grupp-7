@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/AM26-Grupp-7.iml" filepath="$PROJECT_DIR$/.idea/AM26-Grupp-7.iml" />
+      <module fileurl="file://$PROJECT_DIR$/am_space_invaders_demo-main/alien-game.iml" filepath="$PROJECT_DIR$/am_space_invaders_demo-main/alien-game.iml" />
+    </modules>
+  </component>
+</project>
