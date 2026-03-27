@@ -10,11 +10,11 @@ import static javax.swing.JFrame.EXIT_ON_CLOSE;
  */
 public class App {
     public static void main(String[] args) {
-        JFrame main = new JFrame("Invaders");
+        JFrame main = new JFrame("Jumpy Birb");
 
         GameSurface gs = new GameSurface(800);
 
-        main.setSize(800, 600);
+        main.setSize(800, 800);
         main.setResizable(false);
         main.add(gs);
         main.addKeyListener(gs);
