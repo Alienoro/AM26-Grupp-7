@@ -48,26 +48,34 @@ public class GameSurface extends JPanel implements KeyListener {
     private transient List<Alien> aliens;
     private Rectangle spaceShip;
     private transient BufferedImage shipImageSprite;
-    private int shipImageSpriteCount;
+    private transient BufferedImage backgroundImage;
     private int score;
     private static final int GAP_SIZE = 200; // storleken på hålet mellan pelarna
     private int timeSinceLastPillar = 0;
 
     public GameSurface(final int width) {
-        try (InputStream spriteStream = GameSurface.class.getResourceAsStream("/ship.png")) {
+        try (InputStream spriteStream = GameSurface.class.getResourceAsStream("/pony.png")) {
             if (spriteStream == null) {
-                logger.log(Level.WARNING, "Unable to load image resource: /ship.png");
+                logger.log(Level.WARNING, "Unable to load image resource: /pony.png");
             } else {
                 this.shipImageSprite = ImageIO.read(spriteStream);
             }
-            this.shipImageSpriteCount = 0;
+            // this.shipImageSpriteCount = 0;
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to load image resource: /ship.png", ex);
+            logger.log(Level.WARNING, "Unable to load image resource: /pony.png", ex);
         }
-
+        try (InputStream bgStream = GameSurface.class.getResourceAsStream("/background.jpg")) {
+            if (bgStream == null) {
+                logger.log(Level.WARNING, "Unable to load image resource: /background.jpg");
+            } else {
+                this.backgroundImage = ImageIO.read(bgStream);
+            }
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to load image resource: /background.jpg", ex);
+        }
         this.gameOver = false;
         this.aliens = new ArrayList<>();
-        this.spaceShip = new Rectangle(20, width / 2 - 15, 46, 20);
+        this.spaceShip = new Rectangle(20, width / 2 - 15, 80, 80);
         this.score = 0;
 
         this.updater = new FrameUpdater(this, 60);
@@ -93,28 +101,43 @@ public class GameSurface extends JPanel implements KeyListener {
         final Dimension d = this.getSize();
 
         if (gameOver) {
-            g.setColor(Color.red);
+            g.setColor(Color.pink);
             g.fillRect(0, 0, d.width, d.height);
             g.setColor(Color.black);
             g.setFont(new Font("Arial", Font.BOLD, 48));
             g.drawString("Game over!", 20, d.width / 2 - 24);
             g.setFont(new Font("Arial", Font.BOLD, 20));
-            g.drawString("You have died... Press Enter to start over", 20, d.height / 2 + 20);
+            g.drawString("You have fallen asleep... Press Space to wake up", 20, d.height / 2 + 20);
             g.setFont(new Font("Arial", Font.BOLD, 20));
-            g.drawString("Sucker >:)", 20, d.height / 2 + 50);
+            g.drawString("Silly little pony", 20, d.height / 2 + 50);
             drawScore(g, d, true);
             return;
         }
 
         // fill the background
-        g.setColor(Color.DARK_GRAY);
-        g.fillRect(0, 0, d.width, d.height);
+        // g.setColor(Color.DARK_GRAY);
+        // g.fillRect(0, 0, d.width, d.height);
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, d.width, d.height, null);
+        } else {
+            // fallback om bilden inte laddas
+            g.setColor(Color.DARK_GRAY);
+            g.fillRect(0, 0, d.width, d.height);
+        }
 
         // varje alien är nu två pelare, en uppifrån och en nedifrån med ett mellanrum
         // emellan
         // Det blir en pelare för varje alien...
+        // for (Alien alien : aliens) {
+        // g.setColor(Color.GREEN);
+        // g.fillRect(alien.topPillar.x, alien.topPillar.y,
+        // alien.topPillar.width, alien.topPillar.height);
+        // g.fillRect(alien.bottomPillar.x, alien.bottomPillar.y,
+        // alien.bottomPillar.width, alien.bottomPillar.height);
+        // }
         for (Alien alien : aliens) {
-            g.setColor(Color.GREEN);
+            // lila färg som matchar pony-temat
+            g.setColor(new Color(147, 112, 219));
             g.fillRect(alien.topPillar.x, alien.topPillar.y,
                     alien.topPillar.width, alien.topPillar.height);
             g.fillRect(alien.bottomPillar.x, alien.bottomPillar.y,
@@ -122,10 +145,10 @@ public class GameSurface extends JPanel implements KeyListener {
         }
 
         // draw the space ship, as a cool image if it did load properly
+        // if (shipImageSprite != null) {
         if (shipImageSprite != null) {
-            int offset = 46 * shipImageSpriteCount;
-            g.drawImage(shipImageSprite, spaceShip.x, spaceShip.y, spaceShip.x + spaceShip.width,
-                    spaceShip.y + spaceShip.height, offset, 0, offset + 46, 20, null);
+            g.drawImage(shipImageSprite, spaceShip.x, spaceShip.y,
+                    spaceShip.width, spaceShip.height, null);
         } else {
             g.setColor(Color.black);
             g.fillRect(spaceShip.x, spaceShip.y, spaceShip.width, spaceShip.height);
@@ -144,6 +167,14 @@ public class GameSurface extends JPanel implements KeyListener {
         int textX = d.width - metrics.stringWidth(scoreText) - margin;
         int textY = margin + metrics.getAscent();
 
+        // g.setColor(new Color(255, 230, 0));
+        // g.drawString(scoreText, textX, textY);
+        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.setColor(new Color(255, 230, 0));
+        g.drawString("⭐", textX - 30, textY + 2);
+
+        // rita poängtexten
+        g.setFont(scoreFont);
         g.setColor(new Color(255, 230, 0));
         g.drawString(scoreText, textX, textY);
     }
@@ -191,7 +222,7 @@ public class GameSurface extends JPanel implements KeyListener {
         }
 
         // update ship sprite
-        shipImageSpriteCount = (time / 100) % 3;
+        // shipImageSpriteCount = (time / 100) % 3;
 
         // update alien sprite
         // alienImageSpriteCount = (time / 150) % 3;
@@ -272,7 +303,7 @@ public class GameSurface extends JPanel implements KeyListener {
         final int kc = e.getKeyCode();
 
         if (gameOver) {
-            if (kc == KeyEvent.VK_ENTER) {
+            if (kc == KeyEvent.VK_SPACE) {
                 resetGame();
             }
             return;
