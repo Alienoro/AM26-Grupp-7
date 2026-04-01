@@ -103,6 +103,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
      */
     private void drawSurface(Graphics2D g) {
         final Dimension d = this.getSize();
+        // sparar ursprunglig transformation så lutningen inte påverkar nästa frame
+        java.awt.geom.AffineTransform original = g.getTransform();
 
         if (gameOver) {
             g.setColor(Color.pink);
@@ -111,10 +113,12 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.setFont(new Font("Arial", Font.BOLD, 48));
             g.drawString("Game over!", 20, d.width / 2 - 24);
             g.setFont(new Font("Arial", Font.BOLD, 20));
-            g.drawString("You have fallen asleep... Press Space to wake up", 20, d.height / 2 + 20);
+            g.drawString("You have fallen asleep... Press Space OR Left Click to wake up", 20,
+                    d.height / 2 + 20);
             g.setFont(new Font("Arial", Font.BOLD, 20));
             g.drawString("Silly little pony", 20, d.height / 2 + 50);
             drawScore(g, d, true);
+            g.setTransform(original);
             return;
         }
 
@@ -147,13 +151,17 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         // överdriven rörelse
         if (shipImageSprite != null) {
             double clampedVelocity = Math.max(-5, Math.min(5, velocityY));
-            double angle = Math.toRadians(clampedVelocity * 50);
+            double angle = Math.toRadians(clampedVelocity * 40);
             java.awt.geom.AffineTransform old = g.getTransform();
-            g.rotate(angle, spaceShip.x + spaceShip.width / 2,
-                    spaceShip.y + spaceShip.height / 2);
-            g.drawImage(shipImageSprite, spaceShip.x, spaceShip.y,
-                    spaceShip.width, spaceShip.height, null);
-            g.setTransform(old);
+            try {
+                g.rotate(angle, spaceShip.x + spaceShip.width / 2,
+                        spaceShip.y + spaceShip.height / 2);
+                g.drawImage(shipImageSprite, spaceShip.x, spaceShip.y,
+                        spaceShip.width, spaceShip.height, null);
+            } finally {
+                // återställer alltid transformationen oavsett vad som händer
+                g.setTransform(old);
+            }
         } else {
             g.setColor(Color.black);
             g.fillRect(spaceShip.x, spaceShip.y, spaceShip.width, spaceShip.height);

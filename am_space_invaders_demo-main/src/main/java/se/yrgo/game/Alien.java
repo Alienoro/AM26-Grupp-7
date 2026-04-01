@@ -12,7 +12,7 @@ public class Alien {
 
     public Alien(int created, int x, int gapY, int gapSize, int screenHeight) {
         this.created = created;
-        this.topPillar = new Rectangle(x, 0, 40, gapY);
-        this.bottomPillar = new Rectangle(x, gapY + gapSize, 40, screenHeight - gapY - gapSize);
+        this.topPillar = new Rectangle(x, 0, 60, gapY);
+        this.bottomPillar = new Rectangle(x, gapY + gapSize, 60, screenHeight - gapY - gapSize);
     }
 }
