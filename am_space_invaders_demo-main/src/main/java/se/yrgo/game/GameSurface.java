@@ -9,6 +9,8 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -128,31 +130,33 @@ public class GameSurface extends JPanel implements KeyListener {
         // varje alien är nu två pelare, en uppifrån och en nedifrån med ett mellanrum
         // emellan
         // Det blir en pelare för varje alien...
-        // for (Alien alien : aliens) {
-        // g.setColor(Color.GREEN);
-        // g.fillRect(alien.topPillar.x, alien.topPillar.y,
-        // alien.topPillar.width, alien.topPillar.height);
-        // g.fillRect(alien.bottomPillar.x, alien.bottomPillar.y,
-        // alien.bottomPillar.width, alien.bottomPillar.height);
-        // }
+        // lila färg som matchar pony-temat
         for (Alien alien : aliens) {
-            // lila färg som matchar pony-temat
             g.setColor(new Color(147, 112, 219));
             g.fillRect(alien.topPillar.x, alien.topPillar.y,
                     alien.topPillar.width, alien.topPillar.height);
             g.fillRect(alien.bottomPillar.x, alien.bottomPillar.y,
                     alien.bottomPillar.width, alien.bottomPillar.height);
         }
-
         // draw the space ship, as a cool image if it did load properly
-        // if (shipImageSprite != null) {
+        
+        // clampedVelocity begränsar hastigheten så att ponyn inte roterar för mycket
+        // angle är ansvarig för vinkeln på ponyn högre multiplikator ger en mer överdriven rörelse
         if (shipImageSprite != null) {
+            double clampedVelocity = Math.max(-5, Math.min(5, velocityY));
+            double angle = Math.toRadians(clampedVelocity * 50);
+            java.awt.geom.AffineTransform old = g.getTransform();
+            g.rotate(angle, spaceShip.x + spaceShip.width / 2,
+                    spaceShip.y + spaceShip.height / 2);
             g.drawImage(shipImageSprite, spaceShip.x, spaceShip.y,
                     spaceShip.width, spaceShip.height, null);
+            g.setTransform(old);
         } else {
             g.setColor(Color.black);
             g.fillRect(spaceShip.x, spaceShip.y, spaceShip.width, spaceShip.height);
         }
+
+   
 
         drawScore(g, d, false);
     }
