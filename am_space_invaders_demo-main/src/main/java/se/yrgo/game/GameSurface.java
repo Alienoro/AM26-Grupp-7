@@ -33,7 +33,7 @@ import javax.swing.JPanel;
  * game making out there which are much more suitable for this.
  * 
  */
-public class GameSurface extends JPanel implements KeyListener {
+public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private static final long serialVersionUID = 6260582674762246325L;
     private static Logger logger = Logger.getLogger(GameSurface.class.getName());
 
@@ -83,6 +83,8 @@ public class GameSurface extends JPanel implements KeyListener {
         this.updater = new FrameUpdater(this, 60);
         this.updater.setDaemon(true); // it should not keep the app running
         this.updater.start();
+        // registrerar musklick på spelet
+        this.addMouseListener(this);
     }
 
     @Override
@@ -139,9 +141,10 @@ public class GameSurface extends JPanel implements KeyListener {
                     alien.bottomPillar.width, alien.bottomPillar.height);
         }
         // draw the space ship, as a cool image if it did load properly
-        
+
         // clampedVelocity begränsar hastigheten så att ponyn inte roterar för mycket
-        // angle är ansvarig för vinkeln på ponyn högre multiplikator ger en mer överdriven rörelse
+        // angle är ansvarig för vinkeln på ponyn högre multiplikator ger en mer
+        // överdriven rörelse
         if (shipImageSprite != null) {
             double clampedVelocity = Math.max(-5, Math.min(5, velocityY));
             double angle = Math.toRadians(clampedVelocity * 50);
@@ -155,8 +158,6 @@ public class GameSurface extends JPanel implements KeyListener {
             g.setColor(Color.black);
             g.fillRect(spaceShip.x, spaceShip.y, spaceShip.width, spaceShip.height);
         }
-
-   
 
         drawScore(g, d, false);
     }
@@ -326,5 +327,34 @@ public class GameSurface extends JPanel implements KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {
         // do nothing
+    }
+
+    // mouselistener fungerar precis som keylistener för musknapp istället för key
+    @Override
+    public void mousePressed(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            if (gameOver) {
+                resetGame();
+                return;
+            }
+            velocityY = JUMP_FORCE;
+        }
+    }
+
+    // dessa metoder måste finnas med precis som ovanför med alla key metoder
+    @Override
+    public void mouseClicked(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
     }
 }
