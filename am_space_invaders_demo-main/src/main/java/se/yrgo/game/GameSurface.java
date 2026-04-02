@@ -76,7 +76,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
         this.gameOver = false;
         this.aliens = new ArrayList<>();
-        this.spaceShip = new Rectangle(20, width / 2 - 15, 80, 80);
+        this.spaceShip = new Rectangle(160, width / 2 - 15, 80, 80);
+
         this.score = 0;
 
         this.updater = new FrameUpdater(this, 60);
@@ -287,6 +288,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         aliens.add(new Alien(newTime, FAR_OFFSCREEN, gapY, GAP_SIZE, height));
     }
 
+    // Set spaceship to the right!!
     private void resetGame() {
         // stoppar den gamla tråden
         if (updater != null) {
@@ -299,7 +301,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         Dimension d = this.getSize();
-        spaceShip.setLocation(20, d.height / 2);
+        spaceShip.setLocation(160, d.height / 2);
         aliens.clear();
         velocityY = 0;
         lastTime = 0;
