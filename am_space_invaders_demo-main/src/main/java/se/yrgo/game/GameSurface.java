@@ -76,7 +76,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
         this.gameOver = false;
         this.aliens = new ArrayList<>();
-        this.spaceShip = new Rectangle(20, width / 2 - 15, 80, 80);
+        this.spaceShip = new Rectangle(160, width / 2 - 15, 80, 80);
         this.score = 0;
 
         this.updater = new FrameUpdater(this, 60);
@@ -224,9 +224,9 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         // fill up with some aliens if we have none (at start of game)
         if (aliens.isEmpty()) {
             for (int i = 0; i < 3; ++i) {
-                addAlien(time - (i * 2000), d.height, false);
+                addAlien(time + 3000 - (i * 3000), d.height, false);
             }
-            timeSinceLastPillar = time; // sparar när senaste pelaren skedde
+            timeSinceLastPillar = time + 3000; // sparar när senaste pelaren skedde
         }
 
         // time-based score gives predictable progression independent of frame rate.
@@ -262,7 +262,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
         // skapar en ny pelare var 2000ms automatiskt
         // time - timeSinceLastPillar räknar ut hur lång tid sedan senaste pelaren
-        if (time - timeSinceLastPillar >= 2000) {
+        if (time - timeSinceLastPillar >= 3000) {
             timeSinceLastPillar = time; // sparar när senaste pelaren skapades
             addAlien(time, d.height, false);
         }
@@ -299,7 +299,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         Dimension d = this.getSize();
-        spaceShip.setLocation(20, d.height / 2);
+        spaceShip.setLocation(160, d.height / 2);
         aliens.clear();
         velocityY = 0;
         lastTime = 0;
