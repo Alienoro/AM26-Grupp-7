@@ -36,7 +36,6 @@ import javax.swing.JPanel;
 public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private static final long serialVersionUID = 6260582674762246325L;
     private static Logger logger = Logger.getLogger(GameSurface.class.getName());
-
     private static final double ALIEN_PIXELS_PER_MS = 0.12;
     private static final int SCORE_PER_SECOND = 1000;
     private double velocityY = 0;
@@ -123,8 +122,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         // fill the background
-        // g.setColor(Color.DARK_GRAY);
-        // g.fillRect(0, 0, d.width, d.height);
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, d.width, d.height, null);
         } else {
@@ -180,8 +177,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         int textX = d.width - metrics.stringWidth(scoreText) - margin;
         int textY = margin + metrics.getAscent();
 
-        // g.setColor(new Color(255, 230, 0));
-        // g.drawString(scoreText, textX, textY);
         g.setFont(new Font("Arial", Font.BOLD, 20));
         g.setColor(new Color(255, 230, 0));
         g.drawString("⭐", textX - 30, textY + 2);
@@ -233,12 +228,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             }
             timeSinceLastPillar = time; // sparar när senaste pelaren skedde
         }
-
-        // update ship sprite
-        // shipImageSpriteCount = (time / 100) % 3;
-
-        // update alien sprite
-        // alienImageSpriteCount = (time / 150) % 3;
 
         // time-based score gives predictable progression independent of frame rate.
         score = (int) ((time / 1000.0) * SCORE_PER_SECOND);
@@ -299,6 +288,16 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     }
 
     private void resetGame() {
+        // stoppar den gamla tråden
+        if (updater != null) {
+            updater.interrupt();
+            try {
+                updater.join(); // den här biten väntar tills tråden faktiskt stoppat
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
         Dimension d = this.getSize();
         spaceShip.setLocation(20, d.height / 2);
         aliens.clear();
