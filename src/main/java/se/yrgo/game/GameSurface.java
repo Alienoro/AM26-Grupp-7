@@ -47,6 +47,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     // make some transient to get past boring serialization demands...
     private transient FrameUpdater updater;
     private boolean gameOver;
+    private boolean gameStarted = false; // Håller koll på om spelet börjat än och det är false så då står den still
     private transient List<Pillar> pillars;
     private Rectangle pony;
     private transient BufferedImage ponyImage;
@@ -201,6 +202,11 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             return;
         }
 
+        if (!gameStarted) {
+            lastTime = time; // Vi fryser spelet tills spelaren klickar space
+            return;
+        }
+
         final Dimension d = getSize();
         if (d.height <= 0 || d.width <= 0) {
             // if the panel has not been placed properly in the frame yet
@@ -316,6 +322,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         score = 0;
         timeSinceLastPillar = 0;
         gameOver = false;
+        gameStarted = false; // Här börjar spelet på nytt och står still igen
         updater = new FrameUpdater(this, 60);
         updater.setDaemon(true);
         updater.start();
@@ -377,8 +384,10 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         if (kc == KeyEvent.VK_SPACE) {
+            gameStarted = true; // Nu börjar spelet när man klickat på space
             velocityY = JUMP_FORCE;
         }
+
     }
 
     @Override
