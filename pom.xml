@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>se.yrgo</groupId>
-    <artifactId>alien-game</artifactId>
+    <artifactId>flappy-birb</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Space Invaders Demo</name>
-    <description>A basic space invaders demo for educational purposes showing Swing/AWT game development</description>
+    <name>Flappy Birb</name>
+    <description>A basic flappy birb demo for educational purposes showing Swing/AWT game development</description>
 
     <organization>
         <name>Yrgo</name>

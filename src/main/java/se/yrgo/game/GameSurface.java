@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
@@ -38,7 +37,7 @@ import javax.swing.JPanel;
 public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private static final long serialVersionUID = 6260582674762246325L;
     private static Logger logger = Logger.getLogger(GameSurface.class.getName());
-    private static final double ALIEN_PIXELS_PER_MS = 0.12;
+    private static final double PILLAR_PIXELS_PER_MS = 0.12;
     private static final int SCORE_PER_SECOND = 1000;
     private double velocityY = 0;
     private int lastTime = 0;
@@ -48,9 +47,9 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     // make some transient to get past boring serialization demands...
     private transient FrameUpdater updater;
     private boolean gameOver;
-    private transient List<Alien> aliens;
-    private Rectangle spaceShip;
-    private transient BufferedImage shipImageSprite;
+    private transient List<Pillar> pillars;
+    private Rectangle pony;
+    private transient BufferedImage ponyImage;
     private transient BufferedImage backgroundImage;
     private int score;
     private List<Integer> scoreList;
@@ -62,9 +61,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             if (spriteStream == null) {
                 logger.log(Level.WARNING, "Unable to load image resource: /pony.png");
             } else {
-                this.shipImageSprite = ImageIO.read(spriteStream);
+                this.ponyImage = ImageIO.read(spriteStream);
             }
-            // this.shipImageSpriteCount = 0;
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to load image resource: /pony.png", ex);
         }
@@ -78,11 +76,9 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             logger.log(Level.WARNING, "Unable to load image resource: /background.jpg", ex);
         }
         this.gameOver = false;
-        this.aliens = new ArrayList<>();
-        this.spaceShip = new Rectangle(160, width / 2 - 15, 80, 80);
-
+        this.pillars = new ArrayList<>();
+        this.pony = new Rectangle(160, width / 2 - 15, 80, 80);
         this.score = 0;
-
         this.updater = new FrameUpdater(this, 60);
         this.updater.setDaemon(true); // it should not keep the app running
         this.updater.start();
@@ -143,38 +139,37 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.fillRect(0, 0, d.width, d.height);
         }
 
-        // varje alien är nu två pelare, en uppifrån och en nedifrån med ett mellanrum
-        // emellan
-        // Det blir en pelare för varje alien...
+        // varje pelare består av två delar, en uppifrån och en nedifrån med ett gap
+        // mellan dem
         // lila färg som matchar pony-temat
-        for (Alien alien : aliens) {
+        for (Pillar pillar : pillars) {
             g.setColor(new Color(147, 112, 219));
-            g.fillRect(alien.topPillar.x, alien.topPillar.y,
-                    alien.topPillar.width, alien.topPillar.height);
-            g.fillRect(alien.bottomPillar.x, alien.bottomPillar.y,
-                    alien.bottomPillar.width, alien.bottomPillar.height);
+            g.fillRect(pillar.topPillar.x, pillar.topPillar.y,
+                    pillar.topPillar.width, pillar.topPillar.height);
+            g.fillRect(pillar.bottomPillar.x, pillar.bottomPillar.y,
+                    pillar.bottomPillar.width, pillar.bottomPillar.height);
         }
-        // draw the space ship, as a cool image if it did load properly
+        // rita ponyn om bilden laddades korrekt
 
         // clampedVelocity begränsar hastigheten så att ponyn inte roterar för mycket
         // angle är ansvarig för vinkeln på ponyn högre multiplikator ger en mer
         // överdriven rörelse
-        if (shipImageSprite != null) {
+        if (ponyImage != null) {
             double clampedVelocity = Math.max(-5, Math.min(5, velocityY));
             double angle = Math.toRadians(clampedVelocity * 40);
             java.awt.geom.AffineTransform old = g.getTransform();
             try {
-                g.rotate(angle, spaceShip.x + spaceShip.width / 2,
-                        spaceShip.y + spaceShip.height / 2);
-                g.drawImage(shipImageSprite, spaceShip.x, spaceShip.y,
-                        spaceShip.width, spaceShip.height, null);
+                g.rotate(angle, pony.x + pony.width / 2,
+                        pony.y + pony.height / 2);
+                g.drawImage(ponyImage, pony.x, pony.y,
+                        pony.width, pony.height, null);
             } finally {
                 // återställer alltid transformationen oavsett vad som händer
                 g.setTransform(old);
             }
         } else {
             g.setColor(Color.black);
-            g.fillRect(spaceShip.x, spaceShip.y, spaceShip.width, spaceShip.height);
+            g.fillRect(pony.x, pony.y, pony.width, pony.height);
         }
 
         drawScore(g, d, false);
@@ -227,69 +222,69 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         // gravitationen alltid är lika stark oavsett datorns hastighet.
         // snabb dator = litet delta, långsam dator = stort delta, resultatet blir samma
         velocityY += GRAVITY * delta;
-        spaceShip.y += (int) (velocityY * delta);
+        pony.y += (int) (velocityY * delta);
 
-        // håller skeppet inom skärmens gränser så det inte försvinner utanför
+        // håller ponyn inom skärmens gränser så det inte försvinner utanför
         int minY = 10;
-        int maxY = d.height - spaceShip.height - 10;
-        spaceShip.y = Math.max(minY, Math.min(maxY, spaceShip.y));
+        int maxY = d.height - pony.height - 10;
+        pony.y = Math.max(minY, Math.min(maxY, pony.y));
 
-        // fill up with some aliens if we have none (at start of game)
-        if (aliens.isEmpty()) {
+        // fill up with some pillars if we have none (at start of game)
+        if (pillars.isEmpty()) {
             for (int i = 0; i < 3; ++i) {
-                addAlien(time - (i * 2000), d.height, false);
+                addPillar(time + 3000 - (i * 3000), d.height, false);
             }
-            timeSinceLastPillar = time; // sparar när senaste pelaren skedde
+            timeSinceLastPillar = time + 3000; // sparar när senaste pelaren skedde
         }
 
         // time-based score gives predictable progression independent of frame rate.
         score = (int) ((time / 1000.0) * SCORE_PER_SECOND);
 
-        final List<Alien> toRemove = new ArrayList<>();
+        final List<Pillar> toRemove = new ArrayList<>();
 
-        for (Alien alien : aliens) {
-            int timeElapsed = time - alien.created;
-            int newX = (int) (d.width - (timeElapsed * ALIEN_PIXELS_PER_MS));
+        for (Pillar pillar : pillars) {
+            int timeElapsed = time - pillar.created;
+            int newX = (int) (d.width - (timeElapsed * PILLAR_PIXELS_PER_MS));
 
             // båda pelarna rör sig tillsammans
-            alien.topPillar.x = newX;
-            alien.bottomPillar.x = newX;
+            pillar.topPillar.x = newX;
+            pillar.bottomPillar.x = newX;
 
-            if (alien.topPillar.x + alien.topPillar.width < 0) {
-                toRemove.add(alien);
+            if (pillar.topPillar.x + pillar.topPillar.width < 0) {
+                toRemove.add(pillar);
             }
 
             // båda delarna av pelarn har kollision
-            if (alien.topPillar.intersects(spaceShip) ||
-                    alien.bottomPillar.intersects(spaceShip)) {
+            if (pillar.topPillar.intersects(pony) ||
+                    pillar.bottomPillar.intersects(pony)) {
                 gameOver = true;
                 updateHighScore();
             }
         }
 
-        // remove all aliens that are out of frame
-        // we can't remove things from the aliens list while we're
+        // remove all pillars that are out of frame
+        // we can't remove things from the pillars list while we're
         // iterating over it.
-        aliens.removeAll(toRemove);
+        pillars.removeAll(toRemove);
 
-        // add new aliens for every one that was removed
+        // add new pillars for every one that was removed
 
         // skapar en ny pelare var 2000ms automatiskt
         // time - timeSinceLastPillar räknar ut hur lång tid sedan senaste pelaren
-        if (time - timeSinceLastPillar >= 2000) {
+        if (time - timeSinceLastPillar >= 3000) {
             timeSinceLastPillar = time; // sparar när senaste pelaren skapades
-            addAlien(time, d.height, false);
+            addPillar(time, d.height, false);
         }
     }
 
-    private void addAlien(final int time, final int height, boolean randomX) {
+    private void addPillar(final int time, final int height, boolean randomX) {
         int newTime = time;
         if (randomX) {
             // make sure they start randomly somewhere on the screen
             // by adjusting the create time, making it seem like they
             // have traveled on the screen for some time already
             final int MIN_PIXELS_FROM_LEFT = 180;
-            final int MS_TO_TRAVEL_MIN_PIXELS = (int) (MIN_PIXELS_FROM_LEFT / ALIEN_PIXELS_PER_MS);
+            final int MS_TO_TRAVEL_MIN_PIXELS = (int) (MIN_PIXELS_FROM_LEFT / PILLAR_PIXELS_PER_MS);
             newTime = time - ThreadLocalRandom.current().nextInt(MS_TO_TRAVEL_MIN_PIXELS);
         }
 
@@ -298,7 +293,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         // gör så att hålet inte kan vara för nära toppen eller botten så man har en
         // chans att komma igenom
         int gapY = ThreadLocalRandom.current().nextInt(80, height - GAP_SIZE - 80);
-        aliens.add(new Alien(newTime, FAR_OFFSCREEN, gapY, GAP_SIZE, height));
+        pillars.add(new Pillar(newTime, FAR_OFFSCREEN, gapY, GAP_SIZE, height));
     }
 
     // Set spaceship to the right!!
@@ -314,8 +309,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         Dimension d = this.getSize();
-        spaceShip.setLocation(160, d.height / 2);
-        aliens.clear();
+        pony.setLocation(160, d.height / 2);
+        pillars.clear();
         velocityY = 0;
         lastTime = 0;
         score = 0;
