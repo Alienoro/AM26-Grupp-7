@@ -53,7 +53,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private transient BufferedImage ponyImage;
     private transient BufferedImage backgroundImage;
     private int score;
-    private List<Integer> scoreList;
     private static final int GAP_SIZE = 200; // storleken på hålet mellan pelarna
     private int timeSinceLastPillar = 0;
 
