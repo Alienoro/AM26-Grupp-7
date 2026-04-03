@@ -12,8 +12,10 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -27,10 +29,10 @@ import javax.swing.JPanel;
  * demonstrate the bare minimum of stuff than can be done drawing on a panel.
  * This is by no means good code, but rather a short demonstration on
  * some things one can do to make a very simple Swing based game.
- * 
+ * <p>
  * If you really want to make a good game there are several toolkits for
  * game making out there which are much more suitable for this.
- * 
+ *
  */
 public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private static final long serialVersionUID = 6260582674762246325L;
@@ -50,6 +52,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private transient BufferedImage ponyImage;
     private transient BufferedImage backgroundImage;
     private int score;
+    private List<Integer> scoreList;
     private static final int GAP_SIZE = 200; // storleken på hålet mellan pelarna
     private int timeSinceLastPillar = 0;
 
@@ -76,7 +79,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         this.pillars = new ArrayList<>();
         this.pony = new Rectangle(160, width / 2 - 15, 80, 80);
         this.score = 0;
-
         this.updater = new FrameUpdater(this, 60);
         this.updater.setDaemon(true); // it should not keep the app running
         this.updater.start();
@@ -95,7 +97,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     /**
      * Call this method when the graphics needs to be repainted on the graphics
      * surface.
-     * 
+     *
      * @param g the graphics to paint on
      */
     private void drawSurface(Graphics2D g) {
@@ -115,7 +117,16 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.setFont(new Font("Arial", Font.BOLD, 20));
             g.drawString("Silly little pony", 20, d.height / 2 + 50);
             drawScore(g, d, true);
+
             g.setTransform(original);
+
+
+            // hämta highscore och rita ut
+            int highScore = getHighScore();
+            g.setFont(new Font("Arial", Font.BOLD, 20));
+            g.setColor(Color.BLACK);
+            g.drawString("High Score: " + highScore, 20, d.height / 2 + 80);
+
             return;
         }
 
@@ -247,6 +258,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             if (pillar.topPillar.intersects(pony) ||
                     pillar.bottomPillar.intersects(pony)) {
                 gameOver = true;
+                updateHighScore();
             }
         }
 
@@ -284,6 +296,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         pillars.add(new Pillar(newTime, FAR_OFFSCREEN, gapY, GAP_SIZE, height));
     }
 
+    // Set spaceship to the right!!
     private void resetGame() {
         // stoppar den gamla tråden
         if (updater != null) {
@@ -307,6 +320,51 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         updater.setDaemon(true);
         updater.start();
     }
+
+    // hämta highscore från highscore.txt
+    // om filen är tom eller inte finns returnera 0
+    public int getHighScore() {
+        Path path = Path.of("highscore.txt");
+
+        try {
+            if (!Files.exists(path)) {
+                return 0;
+            }
+
+            String value = Files.readString(path).trim();
+
+            if (value.isEmpty()) {
+                return 0;
+            }
+
+            return Integer.parseInt(value);
+
+        } catch (IOException | NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    // updatera highscore
+    // om denna rundans score är högre än highscore från filen, ersätt och uppdatera med score
+    public void updateHighScore() {
+        Path path = Path.of("highscore.txt");
+
+        try {
+            int highscore = getHighScore();
+
+            if (score > highscore) {
+                Files.writeString(
+                        path,
+                        String.valueOf(score),
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING
+                );
+            }
+        } catch (IOException e) {
+            System.err.println("Could not update highscore: " + e.getMessage());
+        }
+    }
+
 
     public void keyPressed(KeyEvent e) {
         final int kc = e.getKeyCode();
