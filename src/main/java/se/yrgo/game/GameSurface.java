@@ -129,7 +129,19 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
             return;
         }
+        if (!gameStarted) { // kollar om spelet börjat för att starta spelmenyn
+            g.setColor(Color.pink);
+            g.fillRect(0, 0, d.width, d.height);
 
+            g.setColor(Color.black);
+            g.setFont(new Font("Arial", Font.BOLD, 30)); // färg och text
+
+            // Här skrivs texten ut startmenyn
+            g.drawString("Tryck SPACE eller MUSKNAPPEN", 150, d.height / 2 - 20);
+            g.drawString("för att starta spelet", 250, d.height / 2 + 20);
+
+            return;
+        }
         // fill the background
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, d.width, d.height, null);
@@ -407,6 +419,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                 resetGame();
                 return;
             }
+                gameStarted = true;
             velocityY = JUMP_FORCE;
         }
     }

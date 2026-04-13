@@ -10,7 +10,7 @@ import static javax.swing.JFrame.EXIT_ON_CLOSE;
  */
 public class App {
     public static void main(String[] args) {
-        JFrame main = new JFrame("Invaders");
+        JFrame main = new JFrame("Flappy Birb");
 
         GameSurface gs = new GameSurface(800);
 
@@ -18,6 +18,7 @@ public class App {
         main.setResizable(false);
         main.add(gs);
         main.addKeyListener(gs);
+        main.addMouseListener(gs);
         main.setDefaultCloseOperation(EXIT_ON_CLOSE);
         main.setVisible(true);
     }
