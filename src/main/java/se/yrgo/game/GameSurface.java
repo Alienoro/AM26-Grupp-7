@@ -419,7 +419,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                 resetGame();
                 return;
             }
-                gameStarted = true;
+                gameStarted = true; // la till så den blir true för att kunna starta med musen med
             velocityY = JUMP_FORCE;
         }
     }
