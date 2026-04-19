@@ -41,6 +41,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private static final int SCORE_PER_SECOND = 1000;
     private double velocityY = 0;
     private int lastTime = 0;
+    private long lastStateChangeTime = 0;
     private static final double GRAVITY = 0.001; // hur snabbt skeppet sjunker.
     private static final double JUMP_FORCE = -0.4; // styrkan i hopp, negativt betyder högre
 
@@ -217,7 +218,10 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             lastTime = time; // Vi fryser spelet tills spelaren klickar space
             return;
         }
-
+        if (System.currentTimeMillis() - lastStateChangeTime < 1000) { // om det gått mindre än 1000ms sedan klicket så pausar vi spelet
+            lastTime = time;
+            return;
+        }
         final Dimension d = getSize();
         if (d.height <= 0 || d.width <= 0) {
             // if the panel has not been placed properly in the frame yet
@@ -395,7 +399,11 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         if (kc == KeyEvent.VK_SPACE) {
-            gameStarted = true; // Nu börjar spelet när man klickat på space
+            if (!gameStarted) {
+                gameStarted = true;
+                lastStateChangeTime = System.currentTimeMillis(); // Spelet kollar när vi klickade på space för 1 seks marginal.
+            }
+
             velocityY = JUMP_FORCE;
         }
 
@@ -419,12 +427,15 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                 resetGame();
                 return;
             }
-                gameStarted = true; // la till så den blir true för att kunna starta med musen med
-            velocityY = JUMP_FORCE;
+
+            if (!gameStarted) {
+                gameStarted = true;
+                lastStateChangeTime = System.currentTimeMillis(); // kollar ms sedan klicket
+            }
+
+            velocityY = JUMP_FORCE; // flyttade på denna så man kan hoppa direkt när tiden är inne
         }
     }
-
-    // dessa metoder måste finnas med precis som ovanför med alla key metoder
     @Override
     public void mouseClicked(MouseEvent e) {
     }
