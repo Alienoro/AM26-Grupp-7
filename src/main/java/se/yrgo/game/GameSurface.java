@@ -55,6 +55,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private int score;
     private static final int GAP_SIZE = 200; // storleken på hålet mellan pelarna
     private int timeSinceLastPillar = 0;
+    private int endMenuWidth = 400;
+    private int endMenuHeight = 400;
 
     public GameSurface(final int width) {
         try (InputStream spriteStream = GameSurface.class.getResourceAsStream("/pony.png")) {
@@ -105,31 +107,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         // sparar ursprunglig transformation så lutningen inte påverkar nästa frame
         java.awt.geom.AffineTransform original = g.getTransform();
 
-        if (gameOver) {
-            g.setColor(Color.pink);
-            g.fillRect(0, 0, d.width, d.height);
-            g.setColor(Color.black);
-            g.setFont(new Font("Arial", Font.BOLD, 48));
-            g.drawString("Game over!", 20, d.width / 2 - 24);
-            g.setFont(new Font("Arial", Font.BOLD, 20));
-            g.drawString("You have fallen asleep... Press Space OR Left Click to wake up", 20,
-                    d.height / 2 + 20);
-            g.setFont(new Font("Arial", Font.BOLD, 20));
-            g.drawString("Silly little pony", 20, d.height / 2 + 50);
-            drawScore(g, d, true);
-
-            g.setTransform(original);
-
-
-            // hämta highscore och rita ut
-            int highScore = getHighScore();
-            g.setFont(new Font("Arial", Font.BOLD, 20));
-            g.setColor(Color.BLACK);
-            g.drawString("High Score: " + highScore, 20, d.height / 2 + 80);
-
-            return;
-        }
-
         // fill the background
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, d.width, d.height, null);
@@ -149,6 +126,50 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.fillRect(pillar.bottomPillar.x, pillar.bottomPillar.y,
                     pillar.bottomPillar.width, pillar.bottomPillar.height);
         }
+
+        if (gameOver) {
+            g.setColor(Color.pink);
+
+            // Här tar vi skärmens storlek minus rutans storlek och delar på två för att
+            // centrera rutan.
+            int xEndMeny = (d.width - endMenuWidth) / 2;
+            int yEndMenu = (d.height - endMenuHeight) / 2;
+
+            // Ritar själva rutan baserat på x-position, y-position och storleken.
+            g.fillRect(xEndMeny, yEndMenu, endMenuWidth, endMenuHeight);
+
+            g.setColor(Color.black);
+
+            g.setFont(new Font("Consolas", Font.BOLD, 40));
+
+            // Höj värdet för x-position för att flytta texten till höger, höj y-position
+            // för att flytta mer neråt.
+            g.drawString("Game over!", xEndMeny + 20, yEndMenu + 50);
+            g.setFont(new Font("Consolas", Font.BOLD, 18));
+
+            g.drawString("You have fallen asleep...",
+                    xEndMeny + 20, yEndMenu + 100);
+            g.drawString("Press Space OR Left Click to wake up",
+                    xEndMeny + 20, yEndMenu + 130);
+            g.setFont(new Font("Consolas", Font.BOLD, 18));
+            // KOMMENTERA
+            g.drawString("Silly little pony", xEndMeny + 20, yEndMenu + 160);
+
+            g.drawString("This round's score: " + score, xEndMeny + 20, yEndMenu + endMenuHeight - 65);
+            // hämta highscore och rita ut
+            int highScore = getHighScore();
+            // KOMMENTERA
+            g.drawString("All time highscore: " + highScore,
+                    xEndMeny + 20,
+                    yEndMenu + endMenuHeight - 40);
+
+            drawScore(g, d, true);
+
+            g.setTransform(original);
+
+            return;
+        }
+
         // rita ponyn om bilden laddades korrekt
 
         // clampedVelocity begränsar hastigheten så att ponyn inte roterar för mycket
@@ -175,23 +196,21 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         drawScore(g, d, false);
     }
 
+    //
     private void drawScore(Graphics2D g, Dimension d, boolean gameOverBackground) {
         final String scoreText = String.format("%07d", score);
         final Font scoreFont = new Font("Monospaced", Font.BOLD, 15);
         final int margin = 14;
 
-        g.setFont(scoreFont);
         FontMetrics metrics = g.getFontMetrics(scoreFont);
         int textX = d.width - metrics.stringWidth(scoreText) - margin;
         int textY = margin + metrics.getAscent();
 
-        g.setFont(new Font("Arial", Font.BOLD, 20));
-        g.setColor(new Color(255, 230, 0));
-        g.drawString("⭐", textX - 30, textY + 2);
-
-        // rita poängtexten
         g.setFont(scoreFont);
         g.setColor(new Color(255, 230, 0));
+
+        // rita poängtexten
+        g.drawString("⭐", textX - 30, textY + 2);
         g.drawString(scoreText, textX, textY);
     }
 
@@ -301,7 +320,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         pillars.add(new Pillar(newTime, FAR_OFFSCREEN, gapY, GAP_SIZE, height));
     }
 
-    // Set spaceship to the right!!
     private void resetGame() {
         // stoppar den gamla tråden
         if (updater != null) {
@@ -314,7 +332,9 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         Dimension d = this.getSize();
-        pony.setLocation(160, d.height / 2);
+
+        // Sets pony position
+        pony.setLocation(170, d.height / 2);
         pillars.clear();
         velocityY = 0;
         lastTime = 0;
@@ -351,7 +371,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     }
 
     // updatera highscore
-    // om denna rundans score är högre än highscore från filen, ersätt och uppdatera med score
+    // om denna rundans score är högre än highscore från filen, ersätt och uppdatera
+    // med score
     public void updateHighScore() {
         Path path = Path.of("highscore.txt");
 
@@ -363,14 +384,12 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                         path,
                         String.valueOf(score),
                         StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING
-                );
+                        StandardOpenOption.TRUNCATE_EXISTING);
             }
         } catch (IOException e) {
             System.err.println("Could not update highscore: " + e.getMessage());
         }
     }
-
 
     public void keyPressed(KeyEvent e) {
         final int kc = e.getKeyCode();
