@@ -14,7 +14,7 @@ public class App {
 
         GameSurface gs = new GameSurface(800);
 
-        gs.setDifficulty(3); // HÄR
+        // gs.setDifficulty(3); // HÄR
 
         main.setSize(800, 800);
         main.setResizable(false);
