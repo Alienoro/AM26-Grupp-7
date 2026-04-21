@@ -136,29 +136,29 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             return;
         }
 
-        if (gameOver) {
-            g.setColor(Color.pink);
-            g.fillRect(0, 0, d.width, d.height);
-            g.setColor(Color.black);
-            g.setFont(new Font("Arial", Font.BOLD, 48));
-            g.drawString("Game over!", 20, d.width / 2 - 24);
-            g.setFont(new Font("Arial", Font.BOLD, 20));
-            g.drawString("You have fallen asleep... Press Space OR Left Click to wake up", 20,
-                    d.height / 2 + 20);
-            g.setFont(new Font("Arial", Font.BOLD, 20));
-            g.drawString("Silly little pony", 20, d.height / 2 + 50);
-            drawScore(g, d, true);
+        // if (gameOver) {
+        //     g.setColor(Color.pink);
+        //     g.fillRect(0, 0, d.width, d.height);
+        //     g.setColor(Color.black);
+        //     g.setFont(new Font("Arial", Font.BOLD, 48));
+        //     g.drawString("Game over!", 20, d.width / 2 - 24);
+        //     g.setFont(new Font("Arial", Font.BOLD, 20));
+        //     g.drawString("You have fallen asleep... Press Space OR Left Click to wake up", 20,
+        //             d.height / 2 + 20);
+        //     g.setFont(new Font("Arial", Font.BOLD, 20));
+        //     g.drawString("Silly little pony", 20, d.height / 2 + 50);
+        //     drawScore(g, d, true);
 
-            g.setTransform(original);
+        //     g.setTransform(original);
 
-            // hämta highscore och rita ut
-            int highScore = getHighScore();
-            g.setFont(new Font("Arial", Font.BOLD, 20));
-            g.setColor(Color.BLACK);
-            g.drawString("High Score: " + highScore, 20, d.height / 2 + 80);
+        //     // hämta highscore och rita ut
+        //     int highScore = getHighScore();
+        //     g.setFont(new Font("Arial", Font.BOLD, 20));
+        //     g.setColor(Color.BLACK);
+        //     g.drawString("High Score: " + highScore, 20, d.height / 2 + 80);
 
-            return;
-        }
+        //     return;
+        // }
         
         // fill the background
         if (backgroundImage != null) {
