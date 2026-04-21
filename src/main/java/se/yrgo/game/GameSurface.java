@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +38,7 @@ import javax.swing.JPanel;
 public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private static final long serialVersionUID = 6260582674762246325L;
     private static Logger logger = Logger.getLogger(GameSurface.class.getName());
-    private static final double PILLAR_PIXELS_PER_MS = 0.12;
+    private static final double PILLAR_PIXELS_PER_MS = 0.12; // HÄR
     private static final int SCORE_PER_SECOND = 1000;
     private double velocityY = 0;
     private int lastTime = 0;
@@ -57,6 +58,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private int timeSinceLastPillar = 0;
     private int endMenuWidth = 400;
     private int endMenuHeight = 400;
+    private static double speedMultiplier = 1; // HÄR
 
     public GameSurface(final int width) {
         try (InputStream spriteStream = GameSurface.class.getResourceAsStream("/pony.png")) {
@@ -256,7 +258,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         // fill up with some pillars if we have none (at start of game)
         if (pillars.isEmpty()) {
             for (int i = 0; i < 3; ++i) {
-                addPillar(time + 3000 - (i * 3000), d.height, false);
+                addPillar(time + (int)(3000 / speedMultiplier) - (int)(i * (3000 / speedMultiplier)), d.height, false); // HÄR
             }
             timeSinceLastPillar = time + 3000; // sparar när senaste pelaren skedde
         }
@@ -268,7 +270,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
         for (Pillar pillar : pillars) {
             int timeElapsed = time - pillar.created;
-            int newX = (int) (d.width - (timeElapsed * PILLAR_PIXELS_PER_MS));
+            int newX = (int) (d.width - (timeElapsed * PILLAR_PIXELS_PER_MS * speedMultiplier)); // HÄR
 
             // båda pelarna rör sig tillsammans
             pillar.topPillar.x = newX;
@@ -295,9 +297,17 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
         // skapar en ny pelare var 2000ms automatiskt
         // time - timeSinceLastPillar räknar ut hur lång tid sedan senaste pelaren
-        if (time - timeSinceLastPillar >= 3000) {
+        if (time - timeSinceLastPillar >= 3000 / speedMultiplier) { //HÄR
             timeSinceLastPillar = time; // sparar när senaste pelaren skapades
             addPillar(time, d.height, false);
+        }
+    }
+
+    public void setDifficulty(int level) { // HÄR
+        switch(level) {
+            case 1 -> speedMultiplier = 1.0;
+            case 2 -> speedMultiplier = 1.5;
+            case 3 -> speedMultiplier = 2;
         }
     }
 
@@ -308,7 +318,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             // by adjusting the create time, making it seem like they
             // have traveled on the screen for some time already
             final int MIN_PIXELS_FROM_LEFT = 180;
-            final int MS_TO_TRAVEL_MIN_PIXELS = (int) (MIN_PIXELS_FROM_LEFT / PILLAR_PIXELS_PER_MS);
+            final int MS_TO_TRAVEL_MIN_PIXELS = (int) (MIN_PIXELS_FROM_LEFT / PILLAR_PIXELS_PER_MS * speedMultiplier); // HÄR
             newTime = time - ThreadLocalRandom.current().nextInt(MS_TO_TRAVEL_MIN_PIXELS);
         }
 
