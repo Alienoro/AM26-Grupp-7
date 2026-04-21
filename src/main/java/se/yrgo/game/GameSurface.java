@@ -44,7 +44,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private int lastTime = 0;
     private static final double GRAVITY = 0.001; // hur snabbt skeppet sjunker.
     private static final double JUMP_FORCE = -0.4; // styrkan i hopp, negativt betyder högre
-
+    private boolean inMenu = true; // spelet börjar i menyn
+    private int selectedDifficulty = 1; // 1 = easy, 2 = normal, 3 = hard
     // make some transient to get past boring serialization demands...
     private transient FrameUpdater updater;
     private boolean gameOver;
@@ -109,6 +110,56 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         // sparar ursprunglig transformation så lutningen inte påverkar nästa frame
         java.awt.geom.AffineTransform original = g.getTransform();
 
+        if (inMenu) {
+            g.setColor(Color.pink);
+            g.fillRect(0, 0, d.width, d.height);
+            g.setColor(Color.black);
+            g.setFont(new Font("Arial", Font.BOLD, 48));
+            g.drawString("Jumpy Birb!", d.width / 2 - 120, d.height / 2 - 100);
+
+            // markerar valt alternativ med en annan färg
+            g.setFont(new Font("Arial", Font.BOLD, 30));
+            g.setColor(selectedDifficulty == 1 ? Color.magenta : Color.black);
+            g.drawString("Easy", d.width / 2 - 40, d.height / 2);
+            g.setColor(selectedDifficulty == 2 ? Color.magenta : Color.black);
+            g.drawString("Normal", d.width / 2 - 40, d.height / 2 + 50);
+            g.setColor(selectedDifficulty == 3 ? Color.magenta : Color.black);
+            g.drawString("Hard", d.width / 2 - 40, d.height / 2 + 100);
+
+            g.setFont(new Font("Arial", Font.BOLD, 15));
+            g.setColor(Color.black);
+            FontMetrics fm = g.getFontMetrics();
+            String instructions = "Använd piltangenterna för att välja, Space för att starta";
+            int instructionsX = (d.width - fm.stringWidth(instructions)) / 2;
+            g.drawString(instructions, instructionsX, d.height / 2 + 200);
+            g.setTransform(original);
+            return;
+        }
+
+        if (gameOver) {
+            g.setColor(Color.pink);
+            g.fillRect(0, 0, d.width, d.height);
+            g.setColor(Color.black);
+            g.setFont(new Font("Arial", Font.BOLD, 48));
+            g.drawString("Game over!", 20, d.width / 2 - 24);
+            g.setFont(new Font("Arial", Font.BOLD, 20));
+            g.drawString("You have fallen asleep... Press Space OR Left Click to wake up", 20,
+                    d.height / 2 + 20);
+            g.setFont(new Font("Arial", Font.BOLD, 20));
+            g.drawString("Silly little pony", 20, d.height / 2 + 50);
+            drawScore(g, d, true);
+
+            g.setTransform(original);
+
+            // hämta highscore och rita ut
+            int highScore = getHighScore();
+            g.setFont(new Font("Arial", Font.BOLD, 20));
+            g.setColor(Color.BLACK);
+            g.drawString("High Score: " + highScore, 20, d.height / 2 + 80);
+
+            return;
+        }
+        
         // fill the background
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, d.width, d.height, null);
@@ -258,7 +309,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         // fill up with some pillars if we have none (at start of game)
         if (pillars.isEmpty()) {
             for (int i = 0; i < 3; ++i) {
-                addPillar(time + (int)(3000 / speedMultiplier) - (int)(i * (3000 / speedMultiplier)), d.height, false); // HÄR
+                addPillar(time + (int) (3000 / speedMultiplier) - (int) (i * (3000 / speedMultiplier)), d.height,
+                        false); // HÄR
             }
             timeSinceLastPillar = time + 3000; // sparar när senaste pelaren skedde
         }
@@ -297,14 +349,14 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
         // skapar en ny pelare var 2000ms automatiskt
         // time - timeSinceLastPillar räknar ut hur lång tid sedan senaste pelaren
-        if (time - timeSinceLastPillar >= 3000 / speedMultiplier) { //HÄR
+        if (time - timeSinceLastPillar >= 3000 / speedMultiplier) { // HÄR
             timeSinceLastPillar = time; // sparar när senaste pelaren skapades
             addPillar(time, d.height, false);
         }
     }
 
     public void setDifficulty(int level) { // HÄR
-        switch(level) {
+        switch (level) {
             case 1 -> speedMultiplier = 1.0;
             case 2 -> speedMultiplier = 1.5;
             case 3 -> speedMultiplier = 2;
@@ -352,6 +404,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         timeSinceLastPillar = 0;
         gameOver = false;
         gameStarted = false; // Här börjar spelet på nytt och står still igen
+        inMenu = true;
+        selectedDifficulty = 1;
         updater = new FrameUpdater(this, 60);
         updater.setDaemon(true);
         updater.start();
@@ -403,6 +457,18 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
     public void keyPressed(KeyEvent e) {
         final int kc = e.getKeyCode();
+
+        if (inMenu) {
+            if (kc == KeyEvent.VK_UP && selectedDifficulty > 1) {
+                selectedDifficulty--;
+            } else if (kc == KeyEvent.VK_DOWN && selectedDifficulty < 3) {
+                selectedDifficulty++;
+            } else if (kc == KeyEvent.VK_SPACE) {
+                setDifficulty(selectedDifficulty);
+                inMenu = false;
+            }
+            return;
+        }
 
         if (gameOver) {
             if (kc == KeyEvent.VK_SPACE) {
