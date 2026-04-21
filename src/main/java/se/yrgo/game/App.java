@@ -20,5 +20,6 @@ public class App {
         main.addKeyListener(gs);
         main.setDefaultCloseOperation(EXIT_ON_CLOSE);
         main.setVisible(true);
+        
     }
 }
