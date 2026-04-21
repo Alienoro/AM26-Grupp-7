@@ -10,11 +10,11 @@ import static javax.swing.JFrame.EXIT_ON_CLOSE;
  */
 public class App {
     public static void main(String[] args) {
-        JFrame main = new JFrame("FlappyBirb");
+        JFrame main = new JFrame("Invaders");
 
         GameSurface gs = new GameSurface(800);
 
-        // gs.setDifficulty(3); // HÄR
+        gs.setDifficulty(3); // HÄR
 
         main.setSize(800, 800);
         main.setResizable(false);
