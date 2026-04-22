@@ -14,6 +14,8 @@ public class App {
 
         GameSurface gs = new GameSurface(800);
 
+        // gs.setDifficulty(3); // HÄR
+
         main.setSize(800, 800);
         main.setResizable(false);
         main.add(gs);
@@ -21,5 +23,6 @@ public class App {
         main.addMouseListener(gs);
         main.setDefaultCloseOperation(EXIT_ON_CLOSE);
         main.setVisible(true);
+        
     }
 }
