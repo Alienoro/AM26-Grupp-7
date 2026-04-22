@@ -24,6 +24,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 
 /**
  * A simple panel with a space invaders "game" in it. This is just to
@@ -60,8 +62,22 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private int endMenuWidth = 400;
     private int endMenuHeight = 400;
     private static double speedMultiplier = 1; // HÄR
+    private Font gameFont;
 
     public GameSurface(final int width) {
+        try (InputStream fontStream = getClass().getResourceAsStream("/PressStart2P-Regular.ttf")) {
+            if (fontStream != null) {
+                Font font = Font.createFont(Font.TRUETYPE_FONT, fontStream);
+                gameFont = font.deriveFont(24f); // storlek
+            } else {
+                System.out.println("Font kunde inte laddas!");
+                gameFont = new Font("Arial", Font.BOLD, 24);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            gameFont = new Font("Arial", Font.BOLD, 24);
+        }
+
         try (InputStream spriteStream = GameSurface.class.getResourceAsStream("/pony.png")) {
             if (spriteStream == null) {
                 logger.log(Level.WARNING, "Unable to load image resource: /pony.png");
@@ -114,11 +130,11 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.setColor(Color.pink);
             g.fillRect(0, 0, d.width, d.height);
             g.setColor(Color.black);
-            g.setFont(new Font("Arial", Font.BOLD, 48));
+            g.setFont(gameFont.deriveFont(Font.BOLD, 48f));
             g.drawString("Jumpy Birb!", d.width / 2 - 120, d.height / 2 - 100);
 
             // markerar valt alternativ med en annan färg
-            g.setFont(new Font("Arial", Font.BOLD, 30));
+            g.setFont(gameFont.deriveFont(Font.BOLD, 30f));
             g.setColor(selectedDifficulty == 1 ? Color.magenta : Color.black);
             g.drawString("Easy", d.width / 2 - 40, d.height / 2);
             g.setColor(selectedDifficulty == 2 ? Color.magenta : Color.black);
@@ -126,7 +142,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.setColor(selectedDifficulty == 3 ? Color.magenta : Color.black);
             g.drawString("Hard", d.width / 2 - 40, d.height / 2 + 100);
 
-            g.setFont(new Font("Arial", Font.BOLD, 15));
+            g.setFont(gameFont.deriveFont(Font.BOLD, 15f));
             g.setColor(Color.black);
             FontMetrics fm = g.getFontMetrics();
             String instructions = "Använd piltangenterna för att välja, Space för att starta";
@@ -137,29 +153,30 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         // if (gameOver) {
-        //     g.setColor(Color.pink);
-        //     g.fillRect(0, 0, d.width, d.height);
-        //     g.setColor(Color.black);
-        //     g.setFont(new Font("Arial", Font.BOLD, 48));
-        //     g.drawString("Game over!", 20, d.width / 2 - 24);
-        //     g.setFont(new Font("Arial", Font.BOLD, 20));
-        //     g.drawString("You have fallen asleep... Press Space OR Left Click to wake up", 20,
-        //             d.height / 2 + 20);
-        //     g.setFont(new Font("Arial", Font.BOLD, 20));
-        //     g.drawString("Silly little pony", 20, d.height / 2 + 50);
-        //     drawScore(g, d, true);
+        // g.setColor(Color.pink);
+        // g.fillRect(0, 0, d.width, d.height);
+        // g.setColor(Color.black);
+        // g.setFont(new Font("Arial", Font.BOLD, 48));
+        // g.drawString("Game over!", 20, d.width / 2 - 24);
+        // g.setFont(new Font("Arial", Font.BOLD, 20));
+        // g.drawString("You have fallen asleep... Press Space OR Left Click to wake
+        // up", 20,
+        // d.height / 2 + 20);
+        // g.setFont(new Font("Arial", Font.BOLD, 20));
+        // g.drawString("Silly little pony", 20, d.height / 2 + 50);
+        // drawScore(g, d, true);
 
-        //     g.setTransform(original);
+        // g.setTransform(original);
 
-        //     // hämta highscore och rita ut
-        //     int highScore = getHighScore();
-        //     g.setFont(new Font("Arial", Font.BOLD, 20));
-        //     g.setColor(Color.BLACK);
-        //     g.drawString("High Score: " + highScore, 20, d.height / 2 + 80);
+        // // hämta highscore och rita ut
+        // int highScore = getHighScore();
+        // g.setFont(new Font("Arial", Font.BOLD, 20));
+        // g.setColor(Color.BLACK);
+        // g.drawString("High Score: " + highScore, 20, d.height / 2 + 80);
 
-        //     return;
+        // return;
         // }
-        
+
         // fill the background
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, d.width, d.height, null);
@@ -181,7 +198,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         if (gameOver) {
-            g.setColor(Color.pink);
+            g.setColor(new Color(255, 192, 203, 150));
 
             // Här tar vi skärmens storlek minus rutans storlek och delar på två för att
             // centrera rutan.
@@ -193,18 +210,18 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
             g.setColor(Color.black);
 
-            g.setFont(new Font("Consolas", Font.BOLD, 40));
+            g.setFont(gameFont.deriveFont(Font.BOLD, 40f));
 
             // Höj värdet för x-position för att flytta texten till höger, höj y-position
             // för att flytta mer neråt.
             g.drawString("Game over!", xEndMeny + 20, yEndMenu + 50);
-            g.setFont(new Font("Consolas", Font.BOLD, 18));
+            g.setFont(gameFont.deriveFont(Font.BOLD, 18f));
 
             g.drawString("You have fallen asleep...",
                     xEndMeny + 20, yEndMenu + 100);
             g.drawString("Press Space OR Left Click to wake up",
                     xEndMeny + 20, yEndMenu + 130);
-            g.setFont(new Font("Consolas", Font.BOLD, 18));
+            g.setFont(gameFont.deriveFont(Font.BOLD, 18f));
             // KOMMENTERA
             g.drawString("Silly little pony", xEndMeny + 20, yEndMenu + 160);
 
