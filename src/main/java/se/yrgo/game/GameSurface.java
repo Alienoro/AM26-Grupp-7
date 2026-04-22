@@ -60,6 +60,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private int endMenuWidth = 400;
     private int endMenuHeight = 400;
     private static double speedMultiplier = 1; // HÄR
+    private SoundPlayer music = new SoundPlayer();
 
     public GameSurface(final int width) {
         try (InputStream spriteStream = GameSurface.class.getResourceAsStream("/pony.png")) {
@@ -450,6 +451,9 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             } else if (kc == KeyEvent.VK_SPACE) {
                 setDifficulty(selectedDifficulty);
                 inMenu = false;
+
+                music.playLoop("/Sugarhoof Bounce.wav");
+                music.playOnce("/Horse.wav");
             }
             return;
         }
@@ -464,6 +468,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         if (kc == KeyEvent.VK_SPACE) {
             gameStarted = true; // Nu börjar spelet när man klickat på space
             velocityY = JUMP_FORCE;
+
+            music.playOnce("/Jump.wav");
         }
 
     }
