@@ -109,58 +109,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         final Dimension d = this.getSize();
         // sparar ursprunglig transformation så lutningen inte påverkar nästa frame
         java.awt.geom.AffineTransform original = g.getTransform();
-
-        if (inMenu) {
-            g.setColor(Color.pink);
-            g.fillRect(0, 0, d.width, d.height);
-            g.setColor(Color.black);
-            g.setFont(new Font("Arial", Font.BOLD, 48));
-            g.drawString("Jumpy Birb!", d.width / 2 - 120, d.height / 2 - 100);
-
-            // markerar valt alternativ med en annan färg
-            g.setFont(new Font("Arial", Font.BOLD, 30));
-            g.setColor(selectedDifficulty == 1 ? Color.magenta : Color.black);
-            g.drawString("Easy", d.width / 2 - 40, d.height / 2);
-            g.setColor(selectedDifficulty == 2 ? Color.magenta : Color.black);
-            g.drawString("Normal", d.width / 2 - 40, d.height / 2 + 50);
-            g.setColor(selectedDifficulty == 3 ? Color.magenta : Color.black);
-            g.drawString("Hard", d.width / 2 - 40, d.height / 2 + 100);
-
-            g.setFont(new Font("Arial", Font.BOLD, 15));
-            g.setColor(Color.black);
-            FontMetrics fm = g.getFontMetrics();
-            String instructions = "Använd piltangenterna för att välja, Space för att starta";
-            int instructionsX = (d.width - fm.stringWidth(instructions)) / 2;
-            g.drawString(instructions, instructionsX, d.height / 2 + 200);
-            g.setTransform(original);
-            return;
-        }
-
-        // if (gameOver) {
-        //     g.setColor(Color.pink);
-        //     g.fillRect(0, 0, d.width, d.height);
-        //     g.setColor(Color.black);
-        //     g.setFont(new Font("Arial", Font.BOLD, 48));
-        //     g.drawString("Game over!", 20, d.width / 2 - 24);
-        //     g.setFont(new Font("Arial", Font.BOLD, 20));
-        //     g.drawString("You have fallen asleep... Press Space OR Left Click to wake up", 20,
-        //             d.height / 2 + 20);
-        //     g.setFont(new Font("Arial", Font.BOLD, 20));
-        //     g.drawString("Silly little pony", 20, d.height / 2 + 50);
-        //     drawScore(g, d, true);
-
-        //     g.setTransform(original);
-
-        //     // hämta highscore och rita ut
-        //     int highScore = getHighScore();
-        //     g.setFont(new Font("Arial", Font.BOLD, 20));
-        //     g.setColor(Color.BLACK);
-        //     g.drawString("High Score: " + highScore, 20, d.height / 2 + 80);
-
-        //     return;
-        // }
         
-        // fill the background
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, d.width, d.height, null);
         } else {
@@ -179,9 +128,44 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.fillRect(pillar.bottomPillar.x, pillar.bottomPillar.y,
                     pillar.bottomPillar.width, pillar.bottomPillar.height);
         }
+        
+        if (inMenu) {
+
+            int xStartMenu = (d.width - endMenuWidth) / 2;
+            int yStartMenu = (d.height - endMenuHeight) / 2;
+
+            g.setColor(new Color(255, 192, 203, 150));
+            g.fillRect(xStartMenu, yStartMenu, endMenuWidth, endMenuHeight);
+            // g.fillRoundRect(xStartMenu, yStartMenu,500 , 500, xStartMenu, yStartMenu);
+            g.setColor(Color.black);
+
+            g.setFont(new Font("Arial", Font.BOLD, 52)); 
+            g.drawString("Jumpy Birb!", xStartMenu + 50, yStartMenu + 80);
+
+            // markerar valt alternativ med en annan färg
+            g.setFont(new Font("Arial", Font.BOLD, 30));
+            g.setColor(selectedDifficulty == 1 ? Color.magenta : Color.black);
+            g.drawString("Easy", xStartMenu + 150, yStartMenu + 170);
+            g.setColor(selectedDifficulty == 2 ? Color.magenta : Color.black);
+            g.drawString("Normal", xStartMenu + 150, yStartMenu + 220);
+            g.setColor(selectedDifficulty == 3 ? Color.magenta : Color.black);
+            g.drawString("Hard", xStartMenu + 150, yStartMenu + 270);
+
+            g.setFont(new Font("Arial", Font.BOLD, 15));
+            g.setColor(Color.black);
+            FontMetrics fm = g.getFontMetrics();
+            String instructions = "Använd piltangenterna för att välja, Space för att starta";
+            int instructionsX = (d.width - fm.stringWidth(instructions)) / 2;
+            g.drawString(instructions, instructionsX, d.height / 2 + 170);
+            g.setTransform(original);
+            return;
+        }
+
+        
+        // fill the background
 
         if (gameOver) {
-            g.setColor(Color.pink);
+            g.setColor(new Color(255, 192, 203, 150));
 
             // Här tar vi skärmens storlek minus rutans storlek och delar på två för att
             // centrera rutan.
