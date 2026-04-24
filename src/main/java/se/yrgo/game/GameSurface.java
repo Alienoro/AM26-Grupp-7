@@ -63,6 +63,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private int endMenuWidth = 400;
     private int endMenuHeight = 400;
     private static double speedMultiplier = 1; // HÄR
+    private SoundPlayer music = new SoundPlayer();
 
     public GameSurface(final int width) {
         try (InputStream spriteStream = GameSurface.class.getResourceAsStream("/pony.png")) {
@@ -113,34 +114,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         final Dimension d = this.getSize();
         // sparar ursprunglig transformation så lutningen inte påverkar nästa frame
         java.awt.geom.AffineTransform original = g.getTransform();
-
-        if (inMenu) {
-            g.setColor(Color.pink);
-            g.fillRect(0, 0, d.width, d.height);
-            g.setColor(Color.black);
-            g.setFont(new Font("Arial", Font.BOLD, 48));
-            g.drawString("Jumpy Birb!", d.width / 2 - 120, d.height / 2 - 100);
-
-            // markerar valt alternativ med en annan färg
-            g.setFont(new Font("Arial", Font.BOLD, 30));
-            g.setColor(selectedDifficulty == 1 ? Color.magenta : Color.black);
-            g.drawString("Easy", d.width / 2 - 40, d.height / 2);
-            g.setColor(selectedDifficulty == 2 ? Color.magenta : Color.black);
-            g.drawString("Normal", d.width / 2 - 40, d.height / 2 + 50);
-            g.setColor(selectedDifficulty == 3 ? Color.magenta : Color.black);
-            g.drawString("Hard", d.width / 2 - 40, d.height / 2 + 100);
-
-            g.setFont(new Font("Arial", Font.BOLD, 15));
-            g.setColor(Color.black);
-            FontMetrics fm = g.getFontMetrics();
-            String instructions = "Använd piltangenterna för att välja, Space eller klick för att starta";
-            int instructionsX = (d.width - fm.stringWidth(instructions)) / 2;
-            g.drawString(instructions, instructionsX, d.height / 2 + 200);
-            g.setTransform(original);
-            return;
-        }
-
-        // fill the background
+        
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, d.width, d.height, null);
         } else {
@@ -159,9 +133,44 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.fillRect(pillar.bottomPillar.x, pillar.bottomPillar.y,
                     pillar.bottomPillar.width, pillar.bottomPillar.height);
         }
+        
+        if (inMenu) {
+
+            int xStartMenu = (d.width - endMenuWidth) / 2;
+            int yStartMenu = (d.height - endMenuHeight) / 2;
+
+            g.setColor(new Color(255, 192, 203, 150));
+            g.fillRect(xStartMenu, yStartMenu, endMenuWidth, endMenuHeight);
+            // g.fillRoundRect(xStartMenu, yStartMenu,500 , 500, xStartMenu, yStartMenu);
+            g.setColor(Color.black);
+
+            g.setFont(new Font("Arial", Font.BOLD, 52)); 
+            g.drawString("Jumpy Birb!", xStartMenu + 50, yStartMenu + 80);
+
+            // markerar valt alternativ med en annan färg
+            g.setFont(new Font("Arial", Font.BOLD, 30));
+            g.setColor(selectedDifficulty == 1 ? Color.magenta : Color.black);
+            g.drawString("Easy", xStartMenu + 150, yStartMenu + 170);
+            g.setColor(selectedDifficulty == 2 ? Color.magenta : Color.black);
+            g.drawString("Normal", xStartMenu + 150, yStartMenu + 220);
+            g.setColor(selectedDifficulty == 3 ? Color.magenta : Color.black);
+            g.drawString("Hard", xStartMenu + 150, yStartMenu + 270);
+
+            g.setFont(new Font("Arial", Font.BOLD, 15));
+            g.setColor(Color.black);
+            FontMetrics fm = g.getFontMetrics();
+            String instructions = "Använd piltangenterna för att välja, Space för att starta";
+            int instructionsX = (d.width - fm.stringWidth(instructions)) / 2;
+            g.drawString(instructions, instructionsX, d.height / 2 + 170);
+            g.setTransform(original);
+            return;
+        }
+
+        
+        // fill the background
 
         if (gameOver) {
-            g.setColor(Color.pink);
+            g.setColor(new Color(255, 192, 203, 150));
 
             // Här tar vi skärmens storlek minus rutans storlek och delar på två för att
             // centrera rutan.
@@ -185,11 +194,13 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.drawString("Press Space OR Left Click to wake up",
                     xEndMeny + 20, yEndMenu + 130);
             g.setFont(new Font("Consolas", Font.BOLD, 18));
+            // KOMMENTERA
             g.drawString("Silly little pony", xEndMeny + 20, yEndMenu + 160);
+
             g.drawString("This round's score: " + score, xEndMeny + 20, yEndMenu + endMenuHeight - 65);
             // hämta highscore och rita ut
             int highScore = getHighScore();
-            // sparar highscore
+            // KOMMENTERA
             g.drawString("All time highscore: " + highScore,
                     xEndMeny + 20,
                     yEndMenu + endMenuHeight - 40);
@@ -300,7 +311,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
         for (Pillar pillar : pillars) {
             int timeElapsed = time - pillar.created;
-            int newX = (int) (d.width - (timeElapsed * PILLAR_PIXELS_PER_MS * speedMultiplier));
+            int newX = (int) (d.width - (timeElapsed * PILLAR_PIXELS_PER_MS * speedMultiplier)); // HÄR
 
             // båda pelarna rör sig tillsammans
             pillar.topPillar.x = newX;
@@ -449,6 +460,9 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                 setDifficulty(selectedDifficulty);
                 inMenu = false;
                 gameStarted = true; // Sätter igång spelet direkt
+
+                music.playLoop("/Sugarhoof Bounce.wav");
+                music.playOnce("/Horse.wav");
             }
             return;
         }
@@ -465,6 +479,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                 gameStarted = true;
             }
             velocityY = JUMP_FORCE;
+
+            music.playOnce("/Jump.wav");
         }
     }
 
