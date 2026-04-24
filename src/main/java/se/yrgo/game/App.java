@@ -20,6 +20,7 @@ public class App {
         main.setResizable(false);
         main.add(gs);
         main.addKeyListener(gs);
+        main.addMouseListener(gs);
         main.setDefaultCloseOperation(EXIT_ON_CLOSE);
         main.setVisible(true);
         

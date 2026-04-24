@@ -42,6 +42,9 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private static final int SCORE_PER_SECOND = 1000;
     private double velocityY = 0;
     private int lastTime = 0;
+    private long lastStateChangeTime = 0;
+    private long lastGameOverTime = 0; // Sparar tidpunkten när spelaren dör
+    private long menuOpenTime = 0; // Sparar tidpunkten när menyn visas eller nollställs
     private static final double GRAVITY = 0.001; // hur snabbt skeppet sjunker.
     private static final double JUMP_FORCE = -0.4; // styrkan i hopp, negativt betyder högre
     private boolean inMenu = true; // spelet börjar i menyn
@@ -85,6 +88,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         this.pillars = new ArrayList<>();
         this.pony = new Rectangle(160, width / 2 - 15, 80, 80);
         this.score = 0;
+        this.menuOpenTime = System.currentTimeMillis();
         this.updater = new FrameUpdater(this, 60);
         this.updater.setDaemon(true); // it should not keep the app running
         this.updater.start();
@@ -321,6 +325,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             if (pillar.topPillar.intersects(pony) ||
                     pillar.bottomPillar.intersects(pony)) {
                 gameOver = true;
+                lastGameOverTime = System.currentTimeMillis(); // Fryser till en halvsek i gamover
                 updateHighScore();
             }
         }
@@ -391,6 +396,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         gameStarted = false; // Här börjar spelet på nytt och står still igen
         inMenu = true;
         selectedDifficulty = 1;
+        menuOpenTime = System.currentTimeMillis();
         updater = new FrameUpdater(this, 60);
         updater.setDaemon(true);
         updater.start();
@@ -444,6 +450,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         final int kc = e.getKeyCode();
 
         if (inMenu) {
+            if (System.currentTimeMillis() - menuOpenTime < 500) return; // förhindrar så man ej kan spamklicka sig genom menyn med halvsek marginal
+
             if (kc == KeyEvent.VK_UP && selectedDifficulty > 1) {
                 selectedDifficulty--;
             } else if (kc == KeyEvent.VK_DOWN && selectedDifficulty < 3) {
@@ -451,6 +459,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             } else if (kc == KeyEvent.VK_SPACE) {
                 setDifficulty(selectedDifficulty);
                 inMenu = false;
+                gameStarted = true; // Sätter igång spelet direkt
 
                 music.playLoop("/Sugarhoof Bounce.wav");
                 music.playOnce("/Horse.wav");
@@ -459,19 +468,20 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         if (gameOver) {
-            if (kc == KeyEvent.VK_SPACE) {
+            if (kc == KeyEvent.VK_SPACE && System.currentTimeMillis() - lastGameOverTime > 500) { // kollar så en halvsek har gått innan man får börja om
                 resetGame();
             }
             return;
         }
 
         if (kc == KeyEvent.VK_SPACE) {
-            gameStarted = true; // Nu börjar spelet när man klickat på space
+            if (!gameStarted) {
+                gameStarted = true;
+            }
             velocityY = JUMP_FORCE;
 
             music.playOnce("/Jump.wav");
         }
-
     }
 
     @Override
@@ -488,15 +498,28 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     @Override
     public void mousePressed(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
-            if (gameOver) {
-                resetGame();
+            if (inMenu) {
+                if (System.currentTimeMillis() - menuOpenTime < 500) return; // gör så musen är aktiverad och dröjer en halvsek innan man får börja
+                setDifficulty(selectedDifficulty);
+                inMenu = false;
+                gameStarted = true;
                 return;
             }
-            velocityY = JUMP_FORCE;
+
+            if (gameOver) {
+                if (System.currentTimeMillis() - lastGameOverTime > 500) { // Gör så musen dröjer en halvsek innan man får starta på nytt
+                    resetGame();
+                }
+                return;
+            }
+
+            if (!gameStarted) {
+                gameStarted = true;
+            }
+
+            velocityY = JUMP_FORCE; // flyttade på denna så man kan hoppa direkt när tiden är inne
         }
     }
-
-    // dessa metoder måste finnas med precis som ovanför med alla key metoder
     @Override
     public void mouseClicked(MouseEvent e) {
     }
