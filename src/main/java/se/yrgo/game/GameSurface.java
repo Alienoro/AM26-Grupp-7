@@ -315,10 +315,12 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         // fill up with some pillars if we have none (at start of game)
         if (pillars.isEmpty()) {
             for (int i = 0; i < 3; ++i) {
-                addPillar(time + (int) (3000 / speedMultiplier) - (int) (i * (3000 / speedMultiplier)), d.height,
+                // ändrade från 3000 till -2000 så pelarna började längre till vänster (då jag
+                // ändrade resolution till 1920x1080)
+                addPillar(time + (int) (-2000 / speedMultiplier) - (int) (i * (3000 / speedMultiplier)), d.height,
                         false); // HÄR
             }
-            timeSinceLastPillar = time + 3000; // sparar när senaste pelaren skedde
+            timeSinceLastPillar = time; // sparar när senaste pelaren skedde
         }
 
         // time-based score gives predictable progression independent of frame rate.
@@ -338,7 +340,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                 toRemove.add(pillar);
             }
 
-            //Hitbox
+            // Hitbox
             Rectangle hitbox = new Rectangle(
                     pony.x + 15,
                     pony.y + 10,
@@ -492,10 +494,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         if (gameOver) {
-            if (kc == KeyEvent.VK_SPACE && System.currentTimeMillis() - lastGameOverTime > 500) { // kollar så en
-                                                                                                  // halvsek har gått
-                                                                                                  // innan man får börja
-                                                                                                  // om
+            // kollar så en halvsek har gått innan man får börja om
+            if (kc == KeyEvent.VK_SPACE && System.currentTimeMillis() - lastGameOverTime > 500) {
                 resetGame();
             }
             return;
@@ -535,8 +535,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             }
 
             if (gameOver) {
-                if (System.currentTimeMillis() - lastGameOverTime > 500) { // Gör så musen dröjer en halvsek innan man
-                                                                           // får starta på nytt
+                // Gör så musen dröjer en halvsek innan man får starta på nytt
+                if (System.currentTimeMillis() - lastGameOverTime > 500) {
                     resetGame();
                 }
                 return;
