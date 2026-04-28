@@ -395,7 +395,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         gameOver = false;
         gameStarted = false; // Här börjar spelet på nytt och står still igen
         inMenu = true;
-        selectedDifficulty = 1;
         menuOpenTime = System.currentTimeMillis();
         updater = new FrameUpdater(this, 60);
         updater.setDaemon(true);
