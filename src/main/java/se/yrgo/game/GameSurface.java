@@ -201,18 +201,19 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
             // Höj värdet för x-position för att flytta texten till höger, höj y-position
             // för att flytta mer neråt.
-            g.drawString("Game over!", xEndMeny + 60, yEndMenu + 50);
+            g.drawString("Game over!", xEndMeny + 60, yEndMenu + 90);
             g.setFont(gameFont.deriveFont(Font.BOLD, 14f));
 
-            g.drawString("You have fallen asleep...",
-                    xEndMeny + 20, yEndMenu + 100);
-            g.drawString("Press space...",
-                    xEndMeny + 20, yEndMenu + 130);
-            g.drawString("OR left click to wake up",
-                    xEndMeny + 20, yEndMenu + 160);
+            // g.drawString("You have fallen asleep...",
+            //         xEndMeny + 20, yEndMenu + 100);
+
+            // g.drawString("OR left click to wake up",
+            //         xEndMeny + 20, yEndMenu + 160);
             g.setFont(gameFont.deriveFont(Font.BOLD, 14f));
-            // KOMMENTERA
-            g.drawString("Silly little pony", xEndMeny + 20, yEndMenu + 210);
+            g.drawString("Silly little pony", xEndMeny + 50, yEndMenu + 160);
+
+            g.drawString("Press space to retry",
+                    xEndMeny + 50, yEndMenu + 210);
 
             g.drawString("This round's score: " + score, xEndMeny + 20, yEndMenu + endMenuHeight - 65);
             // hämta highscore och rita ut
