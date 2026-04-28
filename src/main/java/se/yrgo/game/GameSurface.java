@@ -241,8 +241,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     //
     private void drawScore(Graphics2D g, Dimension d, boolean gameOverBackground) {
         final String scoreText = String.format("%07d", score);
-        final Font scoreFont = new Font("Monospaced", Font.BOLD, 15);
-        final int margin = 14;
+        final Font scoreFont = new Font("Monospaced", Font.BOLD, 30);
+        final int margin = 15;
 
         FontMetrics metrics = g.getFontMetrics(scoreFont);
         int textX = d.width - metrics.stringWidth(scoreText) - margin;
