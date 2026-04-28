@@ -168,12 +168,15 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.setColor(selectedDifficulty == 3 ? Color.magenta : Color.black);
             g.drawString("Hard", xStartMenu + 150, yStartMenu + 270);
 
-            g.setFont(gameFont.deriveFont(Font.BOLD, 10f));
+            g.setFont(gameFont.deriveFont(Font.BOLD, 14f));
             g.setColor(Color.black);
             FontMetrics fm = g.getFontMetrics();
-            String instructions = "Använd piltangenterna för att välja, Space för att starta";
+            String instructions = "↑↓ for difficulty.";
             int instructionsX = (d.width - fm.stringWidth(instructions)) / 2;
-            g.drawString(instructions, instructionsX, d.height / 2 + 170);
+            g.drawString(instructions, instructionsX, d.height / 2 + 150);
+            String instructions2 = "Space to start";
+            int instructionsX2 = (d.width - fm.stringWidth(instructions2)) / 2;
+            g.drawString(instructions2, instructionsX2, d.height / 2 + 170);
             g.setTransform(original);
             return;
         }
