@@ -1,0 +1,569 @@
+package se.yrgo.game;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+
+/**
+ * A simple panel with a space invaders "game" in it. This is just to
+ * demonstrate the bare minimum of stuff than can be done drawing on a panel.
+ * This is by no means good code, but rather a short demonstration on
+ * some things one can do to make a very simple Swing based game.
+ * <p>
+ * If you really want to make a good game there are several toolkits for
+ * game making out there which are much more suitable for this.
+ *
+ */
+public class GameSurface extends JPanel implements KeyListener, MouseListener {
+    private static final long serialVersionUID = 6260582674762246325L;
+    private static Logger logger = Logger.getLogger(GameSurface.class.getName());
+    private static final double PILLAR_PIXELS_PER_MS = 0.12; // HÄR
+    private static final int SCORE_PER_SECOND = 1000;
+    private double velocityY = 0;
+    private int lastTime = 0;
+    private long lastStateChangeTime = 0;
+    private long lastGameOverTime = 0; // Sparar tidpunkten när spelaren dör
+    private long menuOpenTime = 0; // Sparar tidpunkten när menyn visas eller nollställs
+    private static final double GRAVITY = 0.001; // hur snabbt skeppet sjunker.
+    private static final double JUMP_FORCE = -0.4; // styrkan i hopp, negativt betyder högre
+    private boolean inMenu = true; // spelet börjar i menyn
+    private int selectedDifficulty = 1; // 1 = easy, 2 = normal, 3 = hard
+    // make some transient to get past boring serialization demands...
+    private transient FrameUpdater updater;
+    private boolean gameOver;
+    private boolean gameStarted = false; // Håller koll på om spelet börjat än och det är false så då står den still
+    private transient List<Pillar> pillars;
+    private Rectangle pony;
+    private transient BufferedImage ponyImage;
+    private transient BufferedImage backgroundImage;
+    private int score;
+    private static final int GAP_SIZE = 200; // storleken på hålet mellan pelarna
+    private int timeSinceLastPillar = 0;
+    private int endMenuWidth = 400;
+    private int endMenuHeight = 400;
+    private static double speedMultiplier = 1; // HÄR
+    private Font gameFont;
+    private SoundPlayer music = new SoundPlayer();
+
+    public GameSurface(final int width) {
+        try (InputStream fontStream = getClass().getResourceAsStream("/PressStart2P-Regular.ttf")) {
+            if (fontStream != null) {
+                Font font = Font.createFont(Font.TRUETYPE_FONT, fontStream);
+                gameFont = font.deriveFont(24f); // storlek
+            } else {
+                System.out.println("Font kunde inte laddas!");
+                gameFont = new Font("Arial", Font.BOLD, 24);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            gameFont = new Font("Arial", Font.BOLD, 24);
+        }
+
+        try (InputStream spriteStream = GameSurface.class.getResourceAsStream("/pony.png")) {
+            if (spriteStream == null) {
+                logger.log(Level.WARNING, "Unable to load image resource: /pony.png");
+            } else {
+                this.ponyImage = ImageIO.read(spriteStream);
+            }
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to load image resource: /pony.png", ex);
+        }
+        try (InputStream bgStream = GameSurface.class.getResourceAsStream("/background.jpg")) {
+            if (bgStream == null) {
+                logger.log(Level.WARNING, "Unable to load image resource: /background.jpg");
+            } else {
+                this.backgroundImage = ImageIO.read(bgStream);
+            }
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to load image resource: /background.jpg", ex);
+        }
+        this.gameOver = false;
+        this.pillars = new ArrayList<>();
+        this.pony = new Rectangle(160, width / 2 - 15, 80, 80);
+        this.score = 0;
+        this.menuOpenTime = System.currentTimeMillis();
+        this.updater = new FrameUpdater(this, 60);
+        this.updater.setDaemon(true); // it should not keep the app running
+        this.updater.start();
+        // registrerar musklick på spelet
+        this.addMouseListener(this);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        Graphics2D g2d = (Graphics2D) g;
+        drawSurface(g2d);
+    }
+
+    /**
+     * Call this method when the graphics needs to be repainted on the graphics
+     * surface.
+     *
+     * @param g the graphics to paint on
+     */
+    private void drawSurface(Graphics2D g) {
+        final Dimension d = this.getSize();
+        // sparar ursprunglig transformation så lutningen inte påverkar nästa frame
+        java.awt.geom.AffineTransform original = g.getTransform();
+
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, d.width, d.height, null);
+        } else {
+            // fallback om bilden inte laddas
+            g.setColor(Color.DARK_GRAY);
+            g.fillRect(0, 0, d.width, d.height);
+        }
+
+        // varje pelare består av två delar, en uppifrån och en nedifrån med ett gap
+        // mellan dem
+        // lila färg som matchar pony-temat
+        for (Pillar pillar : pillars) {
+            g.setColor(new Color(147, 112, 219));
+            g.fillRect(pillar.topPillar.x, pillar.topPillar.y,
+                    pillar.topPillar.width, pillar.topPillar.height);
+            g.fillRect(pillar.bottomPillar.x, pillar.bottomPillar.y,
+                    pillar.bottomPillar.width, pillar.bottomPillar.height);
+        }
+
+        if (inMenu) {
+
+            int xStartMenu = (d.width - endMenuWidth) / 2;
+            int yStartMenu = (d.height - endMenuHeight) / 2;
+
+            g.setColor(new Color(255, 192, 203, 150));
+            g.fillRect(xStartMenu, yStartMenu, endMenuWidth, endMenuHeight);
+            // g.fillRoundRect(xStartMenu, yStartMenu,500 , 500, xStartMenu, yStartMenu);
+            g.setColor(Color.black);
+
+            g.setFont(gameFont.deriveFont(Font.BOLD, 28f));
+            g.drawString("Jumpy Birb!", xStartMenu + 50, yStartMenu + 80);
+
+            // markerar valt alternativ med en annan färg
+            g.setFont(gameFont.deriveFont(Font.BOLD, 18f));
+            g.setColor(selectedDifficulty == 1 ? Color.magenta : Color.black);
+            g.drawString("Easy", xStartMenu + 150, yStartMenu + 170);
+            g.setColor(selectedDifficulty == 2 ? Color.magenta : Color.black);
+            g.drawString("Normal", xStartMenu + 150, yStartMenu + 220);
+            g.setColor(selectedDifficulty == 3 ? Color.magenta : Color.black);
+            g.drawString("Hard", xStartMenu + 150, yStartMenu + 270);
+
+            g.setFont(gameFont.deriveFont(Font.BOLD, 14f));
+            g.setColor(Color.black);
+            FontMetrics fm = g.getFontMetrics();
+            String instructions = "↑↓ for difficulty.";
+            int instructionsX = (d.width - fm.stringWidth(instructions)) / 2;
+            g.drawString(instructions, instructionsX, d.height / 2 + 150);
+            String instructions2 = "Space to start";
+            int instructionsX2 = (d.width - fm.stringWidth(instructions2)) / 2;
+            g.drawString(instructions2, instructionsX2, d.height / 2 + 170);
+            g.setTransform(original);
+            return;
+        }
+
+        // fill the background
+
+        if (gameOver) {
+            g.setColor(new Color(255, 192, 203, 150));
+
+            // Här tar vi skärmens storlek minus rutans storlek och delar på två för att
+            // centrera rutan.
+            int xEndMeny = (d.width - endMenuWidth) / 2;
+            int yEndMenu = (d.height - endMenuHeight) / 2;
+
+            // Ritar själva rutan baserat på x-position, y-position och storleken.
+            g.fillRect(xEndMeny, yEndMenu, endMenuWidth, endMenuHeight);
+
+            g.setColor(Color.black);
+
+            g.setFont(gameFont.deriveFont(Font.BOLD, 28f));
+
+            // Höj värdet för x-position för att flytta texten till höger, höj y-position
+            // för att flytta mer neråt.
+            g.drawString("Game over!", xEndMeny + 60, yEndMenu + 90);
+            g.setFont(gameFont.deriveFont(Font.BOLD, 14f));
+
+            // g.drawString("You have fallen asleep...",
+            //         xEndMeny + 20, yEndMenu + 100);
+
+            // g.drawString("OR left click to wake up",
+            //         xEndMeny + 20, yEndMenu + 160);
+            g.setFont(gameFont.deriveFont(Font.BOLD, 14f));
+            g.drawString("Silly little pony", xEndMeny + 50, yEndMenu + 160);
+
+            g.drawString("Press space to retry",
+                    xEndMeny + 50, yEndMenu + 210);
+
+            g.drawString("This round's score: " + score, xEndMeny + 20, yEndMenu + endMenuHeight - 65);
+            // hämta highscore och rita ut
+            int highScore = getHighScore();
+            // KOMMENTERA
+            g.drawString("All time highscore: " + highScore,
+                    xEndMeny + 20,
+                    yEndMenu + endMenuHeight - 40);
+
+            drawScore(g, d, true);
+
+            g.setTransform(original);
+
+            return;
+        }
+
+        // rita ponyn om bilden laddades korrekt
+
+        // clampedVelocity begränsar hastigheten så att ponyn inte roterar för mycket
+        // angle är ansvarig för vinkeln på ponyn högre multiplikator ger en mer
+        // överdriven rörelse
+        if (ponyImage != null) {
+            double clampedVelocity = Math.max(-5, Math.min(5, velocityY));
+            double angle = Math.toRadians(clampedVelocity * 40);
+            java.awt.geom.AffineTransform old = g.getTransform();
+            try {
+                g.rotate(angle, pony.x + pony.width / 2,
+                        pony.y + pony.height / 2);
+                g.drawImage(ponyImage, pony.x, pony.y,
+                        pony.width, pony.height, null);
+            } finally {
+                // återställer alltid transformationen oavsett vad som händer
+                g.setTransform(old);
+            }
+        } else {
+            g.setColor(Color.black);
+            g.fillRect(pony.x, pony.y, pony.width, pony.height);
+        }
+
+        drawScore(g, d, false);
+    }
+
+    //
+    private void drawScore(Graphics2D g, Dimension d, boolean gameOverBackground) {
+        final String scoreText = String.format("%07d", score);
+        final Font scoreFont = new Font("Monospaced", Font.BOLD, 30);
+        final int margin = 15;
+
+        FontMetrics metrics = g.getFontMetrics(scoreFont);
+        int textX = d.width - metrics.stringWidth(scoreText) - margin;
+        int textY = margin + metrics.getAscent();
+
+        g.setFont(scoreFont);
+        g.setColor(new Color(255, 230, 0));
+
+        // rita poängtexten
+        g.drawString("⭐", textX - 30, textY + 2);
+        g.drawString(scoreText, textX, textY);
+    }
+
+    public void update(int time) {
+        if (gameOver) {
+            updater.interrupt();
+            return;
+        }
+
+        if (!gameStarted) {
+            lastTime = time; // Vi fryser spelet tills spelaren klickar space
+            return;
+        }
+
+        final Dimension d = getSize();
+        if (d.height <= 0 || d.width <= 0) {
+            // if the panel has not been placed properly in the frame yet
+            // just return without updating any state
+            return;
+        }
+
+        if (lastTime == 0) {
+            lastTime = time;
+        }
+        // delta = millisekunder sedan förra framen, t.ex. 16ms på 60fps
+        // time är total tid sedan spelet startade, så time - lastTime = tid sedan förra
+        // framen
+        // vi sparar sedan time i lastTime så vi kan räkna ut delta nästa frame
+        int delta = time - lastTime;
+        lastTime = time;
+
+        // multiplicerar med delta (millisekunder sedan förra framen) så att
+        // gravitationen alltid är lika stark oavsett datorns hastighet.
+        // snabb dator = litet delta, långsam dator = stort delta, resultatet blir samma
+        velocityY += GRAVITY * delta;
+        pony.y += (int) (velocityY * delta);
+
+        // håller ponyn inom skärmens gränser så det inte försvinner utanför
+        int minY = 10;
+        int maxY = d.height - pony.height - 10;
+        pony.y = Math.max(minY, Math.min(maxY, pony.y));
+
+        // fill up with some pillars if we have none (at start of game)
+        if (pillars.isEmpty()) {
+            for (int i = 0; i < 3; ++i) {
+                // ändrade från 3000 till -2000 så pelarna började längre till vänster (då jag
+                // ändrade resolution till 1920x1080)
+                addPillar(time + (int) (-1000 / speedMultiplier) - (int) (i * (3000 / speedMultiplier)), d.height,
+                        false); // HÄR
+            }
+            timeSinceLastPillar = time; // sparar när senaste pelaren skedde
+        }
+
+        // time-based score gives predictable progression independent of frame rate.
+        score = (int) ((time / 1000.0) * SCORE_PER_SECOND);
+
+        final List<Pillar> toRemove = new ArrayList<>();
+
+        for (Pillar pillar : pillars) {
+            int timeElapsed = time - pillar.created;
+            int newX = (int) (d.width - (timeElapsed * PILLAR_PIXELS_PER_MS * speedMultiplier)); // HÄR
+
+            // båda pelarna rör sig tillsammans
+            pillar.topPillar.x = newX;
+            pillar.bottomPillar.x = newX;
+
+            if (pillar.topPillar.x + pillar.topPillar.width < 0) {
+                toRemove.add(pillar);
+            }
+
+            // Hitbox
+            Rectangle hitbox = new Rectangle(
+                    pony.x + 15,
+                    pony.y + 10,
+                    pony.width - 30,
+                    pony.height - 30);
+
+            // båda delarna av pelarn har kollision
+            if (pillar.topPillar.intersects(hitbox) ||
+                    pillar.bottomPillar.intersects(hitbox)) {
+                gameOver = true;
+                lastGameOverTime = System.currentTimeMillis(); // Fryser till en halvsek i gamover
+                updateHighScore();
+            }
+        }
+
+        // remove all pillars that are out of frame
+        // we can't remove things from the pillars list while we're
+        // iterating over it.
+        pillars.removeAll(toRemove);
+
+        // add new pillars for every one that was removed
+
+        // skapar en ny pelare var 2000ms automatiskt
+        // time - timeSinceLastPillar räknar ut hur lång tid sedan senaste pelaren
+        if (time - timeSinceLastPillar >= 3000 / speedMultiplier) { // HÄR
+            timeSinceLastPillar = time; // sparar när senaste pelaren skapades
+            addPillar(time, d.height, false);
+        }
+    }
+
+    public void setDifficulty(int level) { // HÄR
+        switch (level) {
+            case 1 -> speedMultiplier = 1.0;
+            case 2 -> speedMultiplier = 1.5;
+            case 3 -> speedMultiplier = 2;
+        }
+    }
+
+    private void addPillar(final int time, final int height, boolean randomX) {
+        int newTime = time;
+        if (randomX) {
+            // make sure they start randomly somewhere on the screen
+            // by adjusting the create time, making it seem like they
+            // have traveled on the screen for some time already
+            final int MIN_PIXELS_FROM_LEFT = 180;
+            final int MS_TO_TRAVEL_MIN_PIXELS = (int) (MIN_PIXELS_FROM_LEFT / PILLAR_PIXELS_PER_MS * speedMultiplier); // HÄR
+            newTime = time - ThreadLocalRandom.current().nextInt(MS_TO_TRAVEL_MIN_PIXELS);
+        }
+
+        final int FAR_OFFSCREEN = 10000;
+        // detta slumpar vart mellanrummet ska vara på skärmen
+        // gör så att hålet inte kan vara för nära toppen eller botten så man har en
+        // chans att komma igenom
+        int gapY = ThreadLocalRandom.current().nextInt(80, height - GAP_SIZE - 80);
+        pillars.add(new Pillar(newTime, FAR_OFFSCREEN, gapY, GAP_SIZE, height));
+    }
+
+    private void resetGame() {
+        // stoppar den gamla tråden
+        if (updater != null) {
+            updater.interrupt();
+            try {
+                updater.join(); // den här biten väntar tills tråden faktiskt stoppat
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        Dimension d = this.getSize();
+
+        // Sets pony position
+        pony.setLocation(170, d.height / 2);
+        pillars.clear();
+        velocityY = 0;
+        lastTime = 0;
+        score = 0;
+        timeSinceLastPillar = 0;
+        gameOver = false;
+        gameStarted = false; // Här börjar spelet på nytt och står still igen
+        inMenu = true;
+        menuOpenTime = System.currentTimeMillis();
+        updater = new FrameUpdater(this, 60);
+        updater.setDaemon(true);
+        updater.start();
+    }
+
+    // hämta highscore från highscore.txt
+    // om filen är tom eller inte finns returnera 0
+    public int getHighScore() {
+        Path path = Path.of("highscore.txt");
+
+        try {
+            if (!Files.exists(path)) {
+                return 0;
+            }
+
+            String value = Files.readString(path).trim();
+
+            if (value.isEmpty()) {
+                return 0;
+            }
+
+            return Integer.parseInt(value);
+
+        } catch (IOException | NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    // updatera highscore
+    // om denna rundans score är högre än highscore från filen, ersätt och uppdatera
+    // med score
+    public void updateHighScore() {
+        Path path = Path.of("highscore.txt");
+
+        try {
+            int highscore = getHighScore();
+
+            if (score > highscore) {
+                Files.writeString(
+                        path,
+                        String.valueOf(score),
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING);
+            }
+        } catch (IOException e) {
+            System.err.println("Could not update highscore: " + e.getMessage());
+        }
+    }
+
+    public void keyPressed(KeyEvent e) {
+        final int kc = e.getKeyCode();
+
+        if (inMenu) {
+            if (System.currentTimeMillis() - menuOpenTime < 500)
+                return; // förhindrar så man ej kan spamklicka sig genom menyn med halvsek marginal
+
+            if (kc == KeyEvent.VK_UP && selectedDifficulty > 1) {
+                selectedDifficulty--;
+            } else if (kc == KeyEvent.VK_DOWN && selectedDifficulty < 3) {
+                selectedDifficulty++;
+            } else if (kc == KeyEvent.VK_SPACE) {
+                setDifficulty(selectedDifficulty);
+                inMenu = false;
+                gameStarted = true; // Sätter igång spelet direkt
+
+                music.playLoop("/Sugarhoof Bounce.wav");
+                music.playOnce("/Horse.wav");
+            }
+            return;
+        }
+
+        if (gameOver) {
+            // kollar så en halvsek har gått innan man får börja om
+            if (kc == KeyEvent.VK_SPACE && System.currentTimeMillis() - lastGameOverTime > 500) {
+                resetGame();
+            }
+            return;
+        }
+
+        if (kc == KeyEvent.VK_SPACE) {
+            if (!gameStarted) {
+                gameStarted = true;
+            }
+            velocityY = JUMP_FORCE;
+
+            music.playOnce("/Jump.wav");
+        }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+        // do nothing
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        // do nothing
+    }
+
+    // mouselistener fungerar precis som keylistener för musknapp istället för key
+    @Override
+    public void mousePressed(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            if (inMenu) {
+                if (System.currentTimeMillis() - menuOpenTime < 500)
+                    return; // gör så musen är aktiverad och dröjer en halvsek innan man får börja
+                setDifficulty(selectedDifficulty);
+                inMenu = false;
+                gameStarted = true;
+                return;
+            }
+
+            if (gameOver) {
+                // Gör så musen dröjer en halvsek innan man får starta på nytt
+                if (System.currentTimeMillis() - lastGameOverTime > 500) {
+                    resetGame();
+                }
+                return;
+            }
+
+            if (!gameStarted) {
+                gameStarted = true;
+            }
+
+            velocityY = JUMP_FORCE; // flyttade på denna så man kan hoppa direkt när tiden är inne
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+    }
+}
