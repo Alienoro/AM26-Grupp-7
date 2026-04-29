@@ -476,7 +476,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         final int kc = e.getKeyCode();
 
         if (inMenu) {
-            if (System.currentTimeMillis() - menuOpenTime < 500)
+            if (System.currentTimeMillis() - menuOpenTime < 1000)
                 return; // förhindrar så man ej kan spamklicka sig genom menyn med halvsek marginal
 
             if (kc == KeyEvent.VK_UP && selectedDifficulty > 1) {
@@ -496,7 +496,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
         if (gameOver) {
             // kollar så en halvsek har gått innan man får börja om
-            if (kc == KeyEvent.VK_SPACE && System.currentTimeMillis() - lastGameOverTime > 500) {
+            if (kc == KeyEvent.VK_SPACE && System.currentTimeMillis() - lastGameOverTime > 1000) {
                 resetGame();
             }
             return;
@@ -527,7 +527,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     public void mousePressed(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
             if (inMenu) {
-                if (System.currentTimeMillis() - menuOpenTime < 500)
+                if (System.currentTimeMillis() - menuOpenTime < 1000)
                     return; // gör så musen är aktiverad och dröjer en halvsek innan man får börja
                 setDifficulty(selectedDifficulty);
                 inMenu = false;
@@ -537,7 +537,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
             if (gameOver) {
                 // Gör så musen dröjer en halvsek innan man får starta på nytt
-                if (System.currentTimeMillis() - lastGameOverTime > 500) {
+                if (System.currentTimeMillis() - lastGameOverTime > 1000) {
                     resetGame();
                 }
                 return;
