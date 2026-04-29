@@ -24,6 +24,6 @@ public class App {
         main.addMouseListener(gs);
         main.setDefaultCloseOperation(EXIT_ON_CLOSE);
         main.setVisible(true);
-        
+
     }
 }

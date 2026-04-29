@@ -318,7 +318,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             for (int i = 0; i < 3; ++i) {
                 // ändrade från 3000 till -2000 så pelarna började längre till vänster (då jag
                 // ändrade resolution till 1920x1080)
-                addPillar(time + (int) (-2000 / speedMultiplier) - (int) (i * (3000 / speedMultiplier)), d.height,
+                addPillar(time + (int) (-1000 / speedMultiplier) - (int) (i * (3000 / speedMultiplier)), d.height,
                         false); // HÄR
             }
             timeSinceLastPillar = time; // sparar när senaste pelaren skedde
