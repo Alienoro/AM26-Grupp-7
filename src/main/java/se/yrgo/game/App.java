@@ -2,7 +2,6 @@ package se.yrgo.game;
 
 import javax.swing.JFrame;
 import static javax.swing.JFrame.EXIT_ON_CLOSE;
-import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 
 /**
  * This is a very small "game" just to show the absolute basics of
