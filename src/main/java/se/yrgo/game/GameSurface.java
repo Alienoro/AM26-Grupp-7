@@ -1,21 +1,13 @@
 package se.yrgo.game;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -31,7 +23,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private static final int SCORE_PER_SECOND = 1000;
     private double velocityY = 0;
     private int lastTime = 0;
-    private long lastStateChangeTime = 0;
     private long lastGameOverTime = 0; // Sparar tidpunkten när spelaren dör
     private long menuOpenTime = 0; // Sparar tidpunkten när menyn visas eller nollställs
     private static final double GRAVITY = 0.001; // hur snabbt skeppet sjunker.
@@ -89,14 +80,14 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             logger.log(Level.WARNING, "Unable to load image resource: /background.jpg", ex);
         }
 
-        try (InputStream pillarStream = GameSurface.class.getResourceAsStream("/cloud.png")) {
+        try (InputStream pillarStream = GameSurface.class.getResourceAsStream("/cloud2.png")) {
             if (pillarStream == null) {
-                logger.log(Level.WARNING, "Unable to load image resource: /cloud.png");
+                logger.log(Level.WARNING, "Unable to load image resource: /cloud2.png");
             } else {
                 this.pillarImage = ImageIO.read(pillarStream);
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to load image resource: /cloud.png", ex);
+            logger.log(Level.WARNING, "Unable to load image resource: /cloud2.png", ex);
         }
         this.gameOver = false;
         this.pillars = new ArrayList<>();
@@ -136,26 +127,11 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.setColor(Color.DARK_GRAY);
             g.fillRect(0, 0, d.width, d.height);
         }
-        
+
         for (Pillar pillar : pillars) {
 
-            // Annat alternativ, enstaka moln
-            // g.drawImage(pillarImage,
-            // pillar.topPillar.x,
-            // pillar.topPillar.y + pillar.topPillar.height - 40, // justera 40
-            // 90,
-            // 70,
-            // null);
-
-            // g.drawImage(pillarImage,
-            // pillar.bottomPillar.x,
-            // pillar.bottomPillar.y,
-            // 90,
-            // 70,
-            // null);
-
             // OBS moln som pelare
-            for (int y = pillar.topPillar.y; y < pillar.topPillar.y + pillar.topPillar.height; y += 90) {
+            for (int y = pillar.topPillar.y; y < pillar.topPillar.y + pillar.topPillar.height; y += 75) {
                 g.drawImage(pillarImage,
                         pillar.topPillar.x,
                         y,
@@ -164,7 +140,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                         null);
             }
 
-            for (int y = pillar.bottomPillar.y; y < pillar.bottomPillar.y + pillar.bottomPillar.height; y += 90) {
+            for (int y = pillar.bottomPillar.y; y < pillar.bottomPillar.y + pillar.bottomPillar.height; y += 75) {
                 g.drawImage(pillarImage,
                         pillar.bottomPillar.x,
                         y,
@@ -244,7 +220,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.drawString("This round's score: " + score, xEndMeny + 20, yEndMenu + endMenuHeight - 65);
             // hämta highscore och rita ut
             int highScore = getHighScore();
-            // KOMMENTERA
             g.drawString("All time highscore: " + highScore,
                     xEndMeny + 20,
                     yEndMenu + endMenuHeight - 40);
