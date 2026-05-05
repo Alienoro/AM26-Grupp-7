@@ -44,6 +44,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private long lastStateChangeTime = 0;
     private long lastGameOverTime = 0; // Sparar tidpunkten när spelaren dör
     private long menuOpenTime = 0; // Sparar tidpunkten när menyn visas eller nollställs
+    private long playStartTime = 0; // // Håller koll på när spelaren lämnar menyn för att skapa en startfördröjningp
     private static final double GRAVITY = 0.001; // hur snabbt skeppet sjunker.
     private static final double JUMP_FORCE = -0.4; // styrkan i hopp, negativt betyder högre
     private boolean inMenu = true; // spelet börjar i menyn
@@ -276,7 +277,15 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
     public void update(int time) {
         if (gameOver) {
-            updater.interrupt();
+            if (updater != null) {
+                updater.interrupt();
+            }
+            return;
+        }
+
+        // Kontrollerar om spelet precis startat och fryser logiken i 1 sekund (1000ms)
+        if (gameStarted && System.currentTimeMillis() - playStartTime < 1000) {
+            lastTime = time;
             return;
         }
 
@@ -423,6 +432,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         gameStarted = false; // Här börjar spelet på nytt och står still igen
         inMenu = true;
         menuOpenTime = System.currentTimeMillis();
+        playStartTime = 0; // Återställer starttimern inför nästa spelomgång
         updater = new FrameUpdater(this, 60);
         updater.setDaemon(true);
         updater.start();
@@ -486,6 +496,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             } else if (kc == KeyEvent.VK_SPACE) {
                 setDifficulty(selectedDifficulty);
                 inMenu = false;
+                playStartTime = System.currentTimeMillis(); // Startar timern för grace-perioden innan rörelse börjar
                 gameStarted = true; // Sätter igång spelet direkt
 
                 music.playLoop("/Sugarhoof Bounce.wav");
@@ -505,6 +516,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         if (kc == KeyEvent.VK_SPACE) {
             if (!gameStarted) {
                 gameStarted = true;
+                playStartTime = System.currentTimeMillis();
             }
             velocityY = JUMP_FORCE;
 
@@ -531,6 +543,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                     return; // gör så musen är aktiverad och dröjer en halvsek innan man får börja
                 setDifficulty(selectedDifficulty);
                 inMenu = false;
+                playStartTime = System.currentTimeMillis();
                 gameStarted = true;
                 return;
             }
@@ -545,9 +558,10 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
             if (!gameStarted) {
                 gameStarted = true;
+                playStartTime = System.currentTimeMillis();
             }
 
-            velocityY = JUMP_FORCE; // flyttade på denna så man kan hoppa direkt när tiden är inne
+            velocityY = JUMP_FORCE;
         }
     }
 
