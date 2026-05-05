@@ -1,21 +1,13 @@
 package se.yrgo.game;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -24,16 +16,6 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
-/**
- * A simple panel with a space invaders "game" in it. This is just to
- * demonstrate the bare minimum of stuff than can be done drawing on a panel.
- * This is by no means good code, but rather a short demonstration on
- * some things one can do to make a very simple Swing based game.
- * <p>
- * If you really want to make a good game there are several toolkits for
- * game making out there which are much more suitable for this.
- *
- */
 public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private static final long serialVersionUID = 6260582674762246325L;
     private static Logger logger = Logger.getLogger(GameSurface.class.getName());
@@ -41,7 +23,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private static final int SCORE_PER_SECOND = 1000;
     private double velocityY = 0;
     private int lastTime = 0;
-    private long lastStateChangeTime = 0;
     private long lastGameOverTime = 0; // Sparar tidpunkten när spelaren dör
     private long menuOpenTime = 0; // Sparar tidpunkten när menyn visas eller nollställs
     private long playStartTime = 0; // // Håller koll på när spelaren lämnar menyn för att skapa en startfördröjningp
@@ -57,6 +38,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private Rectangle pony;
     private transient BufferedImage ponyImage;
     private transient BufferedImage backgroundImage;
+    private transient BufferedImage pillarImage;
     private int score;
     private static final int GAP_SIZE = 200; // storleken på hålet mellan pelarna
     private int timeSinceLastPillar = 0;
@@ -98,6 +80,16 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to load image resource: /background.jpg", ex);
         }
+
+        try (InputStream pillarStream = GameSurface.class.getResourceAsStream("/cloud2.png")) {
+            if (pillarStream == null) {
+                logger.log(Level.WARNING, "Unable to load image resource: /cloud2.png");
+            } else {
+                this.pillarImage = ImageIO.read(pillarStream);
+            }
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Unable to load image resource: /cloud2.png", ex);
+        }
         this.gameOver = false;
         this.pillars = new ArrayList<>();
         this.pony = new Rectangle(160, width / 2 - 15, 80, 80);
@@ -137,15 +129,26 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.fillRect(0, 0, d.width, d.height);
         }
 
-        // varje pelare består av två delar, en uppifrån och en nedifrån med ett gap
-        // mellan dem
-        // lila färg som matchar pony-temat
         for (Pillar pillar : pillars) {
-            g.setColor(new Color(147, 112, 219));
-            g.fillRect(pillar.topPillar.x, pillar.topPillar.y,
-                    pillar.topPillar.width, pillar.topPillar.height);
-            g.fillRect(pillar.bottomPillar.x, pillar.bottomPillar.y,
-                    pillar.bottomPillar.width, pillar.bottomPillar.height);
+
+            // OBS moln som pelare
+            for (int y = pillar.topPillar.y; y < pillar.topPillar.y + pillar.topPillar.height; y += 75) {
+                g.drawImage(pillarImage,
+                        pillar.topPillar.x,
+                        y,
+                        90,
+                        70,
+                        null);
+            }
+
+            for (int y = pillar.bottomPillar.y; y < pillar.bottomPillar.y + pillar.bottomPillar.height; y += 75) {
+                g.drawImage(pillarImage,
+                        pillar.bottomPillar.x,
+                        y,
+                        90,
+                        70,
+                        null);
+            }
         }
 
         if (inMenu) {
@@ -219,7 +222,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.drawString("This round's score: " + score, xEndMeny + 20, yEndMenu + endMenuHeight - 65);
             // hämta highscore och rita ut
             int highScore = getHighScore();
-            // KOMMENTERA
             g.drawString("All time highscore: " + highScore,
                     xEndMeny + 20,
                     yEndMenu + endMenuHeight - 40);
