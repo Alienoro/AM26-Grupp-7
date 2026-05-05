@@ -283,14 +283,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             return;
         }
 
-        // Kontrollerar om spelet precis startat och fryser logiken i 1 sekund (1000ms)
-        if (gameStarted && System.currentTimeMillis() - playStartTime < 1000) {
-            lastTime = time;
-            return;
-        }
-
         if (!gameStarted) {
-            lastTime = time; // Vi fryser spelet tills spelaren klickar space
+            lastTime = time; // Vi fryser spelet tills spelaren klickat space eller musklick efter 1seks spärren
             return;
         }
 
@@ -487,7 +481,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
         if (inMenu) {
             if (System.currentTimeMillis() - menuOpenTime < 1000)
-                return; // förhindrar så man ej kan spamklicka sig genom menyn med halvsek marginal
+                return; // förhindrar så man ej kan spamklicka sig genom menyn med 1sek marginal
 
             if (kc == KeyEvent.VK_UP && selectedDifficulty > 1) {
                 selectedDifficulty--;
@@ -496,9 +490,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             } else if (kc == KeyEvent.VK_SPACE) {
                 setDifficulty(selectedDifficulty);
                 inMenu = false;
-                playStartTime = System.currentTimeMillis(); // Startar timern för grace-perioden innan rörelse börjar
-                gameStarted = true; // Sätter igång spelet direkt
-
+                playStartTime = System.currentTimeMillis(); // Klockan startar när vi stänger menyn
                 music.playLoop("/Sugarhoof Bounce.wav");
                 music.playOnce("/Horse.wav");
             }
@@ -506,7 +498,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         if (gameOver) {
-            // kollar så en halvsek har gått innan man får börja om
+            // kollar så en 1sek har gått innan man får börja om
             if (kc == KeyEvent.VK_SPACE && System.currentTimeMillis() - lastGameOverTime > 1000) {
                 resetGame();
             }
@@ -514,9 +506,13 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         if (kc == KeyEvent.VK_SPACE) {
+            // / Ignorerar trycket om 1 sekund inte har gått sedan menyn stängdes
+            if (System.currentTimeMillis() - playStartTime < 1000) {
+                return;
+            }
+
             if (!gameStarted) {
                 gameStarted = true;
-                playStartTime = System.currentTimeMillis();
             }
             velocityY = JUMP_FORCE;
 
@@ -543,8 +539,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                     return; // gör så musen är aktiverad och dröjer en halvsek innan man får börja
                 setDifficulty(selectedDifficulty);
                 inMenu = false;
-                playStartTime = System.currentTimeMillis();
-                gameStarted = true;
+                playStartTime = System.currentTimeMillis(); // Klockan startar när vi stänger menyn
                 return;
             }
 
@@ -556,9 +551,13 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                 return;
             }
 
+            // Ignorerar klicket om det inte gått 1 sek än
+            if (System.currentTimeMillis() - playStartTime < 1000) {
+                return;
+            }
+
             if (!gameStarted) {
                 gameStarted = true;
-                playStartTime = System.currentTimeMillis();
             }
 
             velocityY = JUMP_FORCE;
