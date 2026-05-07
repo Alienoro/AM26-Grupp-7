@@ -357,6 +357,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             if (pillar.topPillar.intersects(hitbox) ||
                     pillar.bottomPillar.intersects(hitbox)) {
                 gameOver = true;
+                music.playOnce("/Death.wav");
                 lastGameOverTime = System.currentTimeMillis(); // Fryser till en halvsek i gamover
                 updateHighScore();
             }
@@ -502,6 +503,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         if (gameOver) {
             // kollar så en 1sek har gått innan man får börja om
             if (kc == KeyEvent.VK_SPACE && System.currentTimeMillis() - lastGameOverTime > 1000) {
+
                 resetGame();
             }
             return;
