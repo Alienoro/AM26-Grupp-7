@@ -25,6 +25,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private int lastTime = 0;
     private long lastGameOverTime = 0; // Sparar tidpunkten när spelaren dör
     private long menuOpenTime = 0; // Sparar tidpunkten när menyn visas eller nollställs
+    private long playStartTime = 0; // // Håller koll på när spelaren lämnar menyn för att skapa en
+                                    // startfördröjningp
     private static final double GRAVITY = 0.001; // hur snabbt skeppet sjunker.
     private static final double JUMP_FORCE = -0.4; // styrkan i hopp, negativt betyder högre
     private boolean inMenu = true; // spelet börjar i menyn
@@ -205,7 +207,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             g.setColor(Color.black);
 
             g.setFont(gameFont.deriveFont(Font.BOLD, 28f));
-
             // * Increase value for x-position to move text to the right, increase
             // y-position to move down */
             g.drawString("Game over!", xEndMeny + 50, yEndMenu + 80);
@@ -215,7 +216,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                     xEndMeny + 50, yEndMenu + 115);
             g.drawString("to wake up",
                     xEndMeny + 95, yEndMenu + 145);
-
             g.setFont(gameFont.deriveFont(Font.BOLD, 15f));
             g.drawString("Silly little pony", xEndMeny + 55, yEndMenu + 215);
 
@@ -293,12 +293,15 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
     public void update(int time) {
         if (gameOver) {
-            updater.interrupt();
+            if (updater != null) {
+                updater.interrupt();
+            }
             return;
         }
 
         if (!gameStarted) {
-            lastTime = time; // Vi fryser spelet tills spelaren klickar space
+            lastTime = time; // Vi fryser spelet tills spelaren klickat space eller musklick efter 1seks
+                             // spärren
             return;
         }
 
@@ -335,7 +338,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             for (int i = 0; i < 3; ++i) {
                 // ändrade från 3000 till -2000 så pelarna började längre till vänster (då jag
                 // ändrade resolution till 1920x1080)
-                addPillar(time + (int) (-2000 / speedMultiplier) - (int) (i * (3000 / speedMultiplier)), d.height,
+                addPillar(time + (int) (-1000 / speedMultiplier) - (int) (i * (3000 / speedMultiplier)), d.height,
                         false); // HÄR
             }
             timeSinceLastPillar = time; // sparar när senaste pelaren skedde
@@ -369,6 +372,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             if (pillar.topPillar.intersects(hitbox) ||
                     pillar.bottomPillar.intersects(hitbox)) {
                 gameOver = true;
+                music.playOnce("/Death.wav");
                 lastGameOverTime = System.currentTimeMillis(); // Fryser till en halvsek i gamover
                 updateHighScore();
             }
@@ -440,6 +444,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         gameStarted = false; // Här börjar spelet på nytt och står still igen
         inMenu = true;
         menuOpenTime = System.currentTimeMillis();
+        playStartTime = 0; // Återställer starttimern inför nästa spelomgång
         updater = new FrameUpdater(this, 60);
         updater.setDaemon(true);
         updater.start();
@@ -479,8 +484,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         final int kc = e.getKeyCode();
 
         if (inMenu) {
-            if (System.currentTimeMillis() - menuOpenTime < 500)
-                return; // förhindrar så man ej kan spamklicka sig genom menyn med halvsek marginal
+            if (System.currentTimeMillis() - menuOpenTime < 1000)
+                return; // förhindrar så man ej kan spamklicka sig genom menyn med 1sek marginal
 
             if (kc == KeyEvent.VK_UP && selectedDifficulty > 1) {
                 selectedDifficulty--;
@@ -489,8 +494,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             } else if (kc == KeyEvent.VK_SPACE) {
                 setDifficulty(selectedDifficulty);
                 inMenu = false;
-                gameStarted = true; // Sätter igång spelet direkt
-
+                playStartTime = System.currentTimeMillis(); // Klockan startar när vi stänger menyn
                 music.playLoop("/Sugarhoof Bounce.wav");
                 music.playOnce("/Horse.wav");
             }
@@ -498,14 +502,20 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         if (gameOver) {
-            // kollar så en halvsek har gått innan man får börja om
-            if (kc == KeyEvent.VK_SPACE && System.currentTimeMillis() - lastGameOverTime > 500) {
+            // kollar så en 1sek har gått innan man får börja om
+            if (kc == KeyEvent.VK_SPACE && System.currentTimeMillis() - lastGameOverTime > 1000) {
+
                 resetGame();
             }
             return;
         }
 
         if (kc == KeyEvent.VK_SPACE) {
+            // / Ignorerar trycket om 1 sekund inte har gått sedan menyn stängdes
+            if (System.currentTimeMillis() - playStartTime < 1000) {
+                return;
+            }
+
             if (!gameStarted) {
                 gameStarted = true;
             }
@@ -567,19 +577,24 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     public void mousePressed(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
             if (inMenu) {
-                if (System.currentTimeMillis() - menuOpenTime < 500)
+                if (System.currentTimeMillis() - menuOpenTime < 1000)
                     return; // gör så musen är aktiverad och dröjer en halvsek innan man får börja
                 setDifficulty(selectedDifficulty);
                 inMenu = false;
-                gameStarted = true;
+                playStartTime = System.currentTimeMillis(); // Klockan startar när vi stänger menyn
                 return;
             }
 
             if (gameOver) {
                 // Gör så musen dröjer en halvsek innan man får starta på nytt
-                if (System.currentTimeMillis() - lastGameOverTime > 500) {
+                if (System.currentTimeMillis() - lastGameOverTime > 1000) {
                     resetGame();
                 }
+                return;
+            }
+
+            // Ignorerar klicket om det inte gått 1 sek än
+            if (System.currentTimeMillis() - playStartTime < 1000) {
                 return;
             }
 
@@ -587,7 +602,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                 gameStarted = true;
             }
 
-            velocityY = JUMP_FORCE; // flyttade på denna så man kan hoppa direkt när tiden är inne
+            velocityY = JUMP_FORCE;
         }
     }
 
