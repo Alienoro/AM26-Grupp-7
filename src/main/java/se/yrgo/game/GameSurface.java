@@ -25,7 +25,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     private int lastTime = 0;
     private long lastGameOverTime = 0; // Sparar tidpunkten när spelaren dör
     private long menuOpenTime = 0; // Sparar tidpunkten när menyn visas eller nollställs
-    private long playStartTime = 0; // // Håller koll på när spelaren lämnar menyn för att skapa en startfördröjningp
+    private long playStartTime = 0; // // Håller koll på när spelaren lämnar menyn för att skapa en
+                                    // startfördröjningp
     private static final double GRAVITY = 0.001; // hur snabbt skeppet sjunker.
     private static final double JUMP_FORCE = -0.4; // styrkan i hopp, negativt betyder högre
     private boolean inMenu = true; // spelet börjar i menyn
@@ -186,41 +187,54 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             return;
         }
 
-        // fill the background
+        /**
+         * fill the background
+         */
 
         if (gameOver) {
             g.setColor(new Color(255, 192, 203, 150));
 
-            // Här tar vi skärmens storlek minus rutans storlek och delar på två för att
-            // centrera rutan.
+            /**
+             * Screen size minus the square size split in 2 in order to center the square
+             */
             int xEndMeny = (d.width - endMenuWidth) / 2;
             int yEndMenu = (d.height - endMenuHeight) / 2;
 
-            // Ritar själva rutan baserat på x-position, y-position och storleken.
+            // *
+            // Draw the square based on x-position, y-position and size */
             g.fillRect(xEndMeny, yEndMenu, endMenuWidth, endMenuHeight);
 
             g.setColor(Color.black);
 
             g.setFont(gameFont.deriveFont(Font.BOLD, 28f));
+            // * Increase value for x-position to move text to the right, increase
+            // y-position to move down */
+            g.drawString("Game over!", xEndMeny + 50, yEndMenu + 80);
 
-            // Höj värdet för x-position för att flytta texten till höger, höj y-position
-            // för att flytta mer neråt.
-            g.drawString("Game over!", xEndMeny + 60, yEndMenu + 90);
             g.setFont(gameFont.deriveFont(Font.BOLD, 14f));
+            g.drawString("Space or left click",
+                    xEndMeny + 50, yEndMenu + 115);
+            g.drawString("to wake up",
+                    xEndMeny + 95, yEndMenu + 145);
+            g.setFont(gameFont.deriveFont(Font.BOLD, 15f));
+            g.drawString("Silly little pony", xEndMeny + 55, yEndMenu + 215);
 
-            // g.drawString("You have fallen asleep...",
-            //         xEndMeny + 20, yEndMenu + 100);
+            String difficulty;
+            if (selectedDifficulty == 1) {
+                difficulty = "Easy";
+            } else if (selectedDifficulty == 2) {
+                difficulty = "Medium";
+            } else {
+                difficulty = "Hard";
+            }
 
-            // g.drawString("OR left click to wake up",
-            //         xEndMeny + 20, yEndMenu + 160);
+            g.setFont(gameFont.deriveFont(Font.BOLD, 18f));
+            g.drawString("Difficulty: " + difficulty,
+                    xEndMeny + 40,
+                    yEndMenu + 290);
+
             g.setFont(gameFont.deriveFont(Font.BOLD, 14f));
-            g.drawString("Silly little pony", xEndMeny + 50, yEndMenu + 160);
-
-            g.drawString("Press space to retry",
-                    xEndMeny + 50, yEndMenu + 210);
-
             g.drawString("This round's score: " + score, xEndMeny + 20, yEndMenu + endMenuHeight - 65);
-            // hämta highscore och rita ut
             int highScore = getHighScore();
             g.drawString("All time highscore: " + highScore,
                     xEndMeny + 20,
@@ -286,7 +300,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
         }
 
         if (!gameStarted) {
-            lastTime = time; // Vi fryser spelet tills spelaren klickat space eller musklick efter 1seks spärren
+            lastTime = time; // Vi fryser spelet tills spelaren klickat space eller musklick efter 1seks
+                             // spärren
             return;
         }
 
@@ -436,10 +451,17 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
     }
 
     // hämta highscore från highscore.txt
-    // om filen är tom eller inte finns returnera 0
-    public int getHighScore() {
-        Path path = Path.of("highscore.txt");
 
+    public int getHighScore() {
+        Path path;
+        if (selectedDifficulty == 1) {
+            path = Path.of("highscore.txt");
+        } else if (selectedDifficulty == 2) {
+            path = Path.of("highscoreMed.txt");
+        } else {
+            path = Path.of("highscoreDiff.txt");
+        }
+        // om filen är tom eller inte finns returnera 0
         try {
             if (!Files.exists(path)) {
                 return 0;
@@ -455,27 +477,6 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
 
         } catch (IOException | NumberFormatException e) {
             return 0;
-        }
-    }
-
-    // updatera highscore
-    // om denna rundans score är högre än highscore från filen, ersätt och uppdatera
-    // med score
-    public void updateHighScore() {
-        Path path = Path.of("highscore.txt");
-
-        try {
-            int highscore = getHighScore();
-
-            if (score > highscore) {
-                Files.writeString(
-                        path,
-                        String.valueOf(score),
-                        StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING);
-            }
-        } catch (IOException e) {
-            System.err.println("Could not update highscore: " + e.getMessage());
         }
     }
 
@@ -521,6 +522,43 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             velocityY = JUMP_FORCE;
 
             music.playOnce("/Jump.wav");
+        }
+    }
+
+    // updatera highscore
+    // om denna rundans score är högre än highscore från filen, ersätt och uppdatera
+    // med score
+    public void updateHighScore() {
+        Path path = Path.of("highscore.txt");
+        Path path2 = Path.of("highscoreMed.txt");
+        Path path3 = Path.of("highscoreDiff.txt");
+
+        try {
+            int highscoreEasy = getHighScore();
+            int highscoreMedium = getHighScore();
+            int highscoreDifficult = getHighScore();
+
+            if (score > highscoreEasy && selectedDifficulty == 1) {
+                Files.writeString(
+                        path,
+                        String.valueOf(score),
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING);
+            } else if (score > highscoreMedium && selectedDifficulty == 2) {
+                Files.writeString(
+                        path2,
+                        String.valueOf(score),
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING);
+            } else if (score > highscoreDifficult && selectedDifficulty == 3) {
+                Files.writeString(
+                        path3,
+                        String.valueOf(score),
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING);
+            }
+        } catch (IOException e) {
+            System.err.println("Could not update highscore: " + e.getMessage());
         }
     }
 
