@@ -2,6 +2,7 @@ package se.yrgo.game;
 
 import javax.swing.JFrame;
 import static javax.swing.JFrame.EXIT_ON_CLOSE;
+import static javax.swing.WindowConstants.EXIT_ON_CLOSE;
 
 /**
  * This is a very small "game" just to show the absolute basics of
@@ -16,7 +17,8 @@ public class App {
 
         // gs.setDifficulty(3); // HÄR
 
-        main.setSize(1920, 1080);
+        // main.setSize(1280, 832);
+        main.setExtendedState(JFrame.MAXIMIZED_BOTH);
         main.setResizable(false);
         main.add(gs);
         main.addKeyListener(gs);
