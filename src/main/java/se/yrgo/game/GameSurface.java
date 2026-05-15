@@ -601,7 +601,7 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
             if (!gameStarted) {
                 gameStarted = true;
             }
-
+            music.playOnce("/Jump.wav");
             velocityY = JUMP_FORCE;
         }
     }

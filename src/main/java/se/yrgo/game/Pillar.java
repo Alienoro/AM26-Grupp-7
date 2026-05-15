@@ -11,7 +11,7 @@ public class Pillar {
 
     public Pillar(int created, int x, int gapY, int gapSize, int screenHeight) {
         this.created = created;
-        this.topPillar = new Rectangle(x, 0, 65, gapY);
-        this.bottomPillar = new Rectangle(x, gapY + gapSize, 65, screenHeight - gapY - gapSize);
+        this.topPillar = new Rectangle(x, 0, 80, gapY);
+        this.bottomPillar = new Rectangle(x, gapY + gapSize, 80, screenHeight - gapY - gapSize);
     }
 }
