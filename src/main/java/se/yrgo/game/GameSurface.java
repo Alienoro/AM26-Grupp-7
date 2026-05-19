@@ -582,6 +582,8 @@ public class GameSurface extends JPanel implements KeyListener, MouseListener {
                 setDifficulty(selectedDifficulty);
                 inMenu = false;
                 playStartTime = System.currentTimeMillis(); // Klockan startar när vi stänger menyn
+                music.playLoop("/Sugarhoof Bounce.wav");
+                music.playOnce("/Horse.wav");
                 return;
             }
 
